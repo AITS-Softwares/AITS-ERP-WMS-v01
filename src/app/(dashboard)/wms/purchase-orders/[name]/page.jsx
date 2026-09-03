@@ -73,11 +73,10 @@ export default function WmsPurchaseOrderDetailPage() {
           <div><p className="text-xs font-bold uppercase text-slate-400">Target warehouse</p><p className="mt-1 text-sm font-semibold text-slate-800">{doc.set_warehouse || "-"}</p></div>
           <div><p className="text-xs font-bold uppercase text-slate-400">Grand total</p><p className="mt-1 text-sm font-semibold text-slate-800">{money(doc.grand_total, doc.currency)}</p></div>
         </div>
-        <div className="mt-6 flex flex-wrap gap-3">
+        {isDraft || isOpen ? <div className="mt-6 flex flex-wrap gap-3">
           {isDraft ? <button type="button" disabled={submitting} onClick={submitDraft} className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{submitting ? "Submitting..." : "Submit to ERPNext"}</button> : null}
           {isOpen ? <Link href={`/wms/grn/new?po=${encodeURIComponent(doc.name)}`} className="rounded-xl bg-cyan-500 px-5 py-2.5 text-sm font-bold text-slate-950">Create GRN against this PO</Link> : null}
-          <Link href="/wms/purchase-orders" className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700">Back to list</Link>
-        </div>
+        </div> : null}
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import WmsSelect from "@/components/wms/WmsSelect";
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token") || ""}` };
@@ -11,12 +12,18 @@ function money(value) {
   return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(Number(value || 0));
 }
 
+function asOptions(records, valueKey, labelKey) {
+  return records.map((record) => ({ value: record[valueKey], label: record[labelKey] || record[valueKey] }));
+}
+
 export default function WmsPurchaseOrderForm() {
   const router = useRouter();
   const [suppliers, setSuppliers] = useState([]);
+  const [companies, setCompanies] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
   const [uoms, setUoms] = useState([]);
   const [supplier, setSupplier] = useState("");
+  const [company, setCompany] = useState("");
   const [scheduleDate, setScheduleDate] = useState("");
   const [warehouse, setWarehouse] = useState("");
   const [itemSearch, setItemSearch] = useState("");
@@ -24,13 +31,47 @@ export default function WmsPurchaseOrderForm() {
   const [lines, setLines] = useState([]);
   const [saving, setSaving] = useState("");
   const [notice, setNotice] = useState(null);
+  const [companiesLoading, setCompaniesLoading] = useState(true);
+  const [companiesError, setCompaniesError] = useState("");
   const minDate = new Date().toISOString().slice(0, 10);
 
+  async function loadCompanies() {
+    setCompaniesLoading(true);
+    setCompaniesError("");
+    try {
+      const response = await fetch("/api/wms/companies?pageSize=100", { headers: authHeaders() });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || "Unable to load Companies from ERPNext.");
+      const records = payload.data?.records || [];
+      setCompanies(records);
+      if (records.length === 1) setCompany(records[0].name);
+    } catch (error) {
+      setCompaniesError(error.message || "Unable to load Companies from ERPNext.");
+    } finally {
+      setCompaniesLoading(false);
+    }
+  }
+
   useEffect(() => {
-    fetch("/api/wms/suppliers?pageSize=100", { headers: authHeaders() }).then((r) => r.json()).then((p) => setSuppliers(p.data?.records || [])).catch(() => {});
-    fetch("/api/wms/warehouses?pageSize=100", { headers: authHeaders() }).then((r) => r.json()).then((p) => setWarehouses(p.data?.records || [])).catch(() => {});
-    fetch("/api/wms/uoms?pageSize=100", { headers: authHeaders() }).then((r) => r.json()).then((p) => setUoms(p.data?.records || [])).catch(() => {});
+    fetch("/api/wms/suppliers?pageSize=100", { headers: authHeaders() })
+      .then((r) => r.json().then((p) => ({ ok: r.ok, p })))
+      .then(({ ok, p }) => { if (!ok) throw new Error(p.message || "Unable to load Suppliers."); setSuppliers(p.data?.records || []); })
+      .catch((error) => setNotice((current) => current || { tone: "error", message: error.message || "Unable to load Suppliers from ERPNext." }));
+    fetch("/api/wms/uoms?pageSize=100", { headers: authHeaders() })
+      .then((r) => r.json().then((p) => ({ ok: r.ok, p })))
+      .then(({ ok, p }) => { if (!ok) throw new Error(p.message || "Unable to load UOMs."); setUoms(p.data?.records || []); })
+      .catch((error) => setNotice((current) => current || { tone: "error", message: error.message || "Unable to load UOMs from ERPNext." }));
+    loadCompanies();
   }, []);
+
+  // Warehouses belong to one ERPNext Company — re-scope the list whenever the
+  // chosen Company changes, so a warehouse from another Company can't be picked.
+  useEffect(() => {
+    setWarehouse("");
+    if (!company) { setWarehouses([]); return; }
+    const query = new URLSearchParams({ pageSize: "100", company });
+    fetch(`/api/wms/warehouses?${query}`, { headers: authHeaders() }).then((r) => r.json()).then((p) => setWarehouses(p.data?.records || [])).catch(() => {});
+  }, [company]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -48,7 +89,11 @@ export default function WmsPurchaseOrderForm() {
   function removeLine(id) { setLines((current) => current.filter((line) => line.id !== id)); }
 
   const total = lines.reduce((sum, line) => sum + Number(line.qty || 0) * Number(line.rate || 0), 0);
-  const canSave = Boolean(supplier) && Boolean(scheduleDate) && lines.length > 0 && lines.every((line) => Number(line.qty) > 0 && Number(line.rate) >= 0);
+  // Company must be chosen/typed whenever the picker has more than one option,
+  // or when the picker itself couldn't load (fallback to manual entry below).
+  const companiesUnavailable = Boolean(companiesError) || (!companiesLoading && companies.length === 0);
+  const needsCompanyInput = companies.length > 1 || companiesUnavailable;
+  const canSave = Boolean(supplier) && Boolean(scheduleDate) && (!needsCompanyInput || Boolean(company)) && lines.length > 0 && lines.every((line) => Number(line.qty) > 0 && Number(line.rate) >= 0);
 
   async function save(shouldSubmit) {
     try {
@@ -59,6 +104,7 @@ export default function WmsPurchaseOrderForm() {
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           supplier,
+          company,
           scheduleDate,
           warehouse,
           submit: shouldSubmit,
@@ -76,6 +122,10 @@ export default function WmsPurchaseOrderForm() {
   }
 
   const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
+  const supplierOptions = asOptions(suppliers, "name", "supplier_name");
+  const companyOptions = asOptions(companies, "name", "company_name");
+  const warehouseOptions = asOptions(warehouses, "name", "warehouse_name");
+  const uomOptions = asOptions(uoms, "name", "name");
 
   return (
     <div className="space-y-6">
@@ -88,21 +138,26 @@ export default function WmsPurchaseOrderForm() {
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
         <h2 className="text-lg font-bold">Purchase Order details</h2>
-        <div className="mt-5 grid gap-5 md:grid-cols-3">
+        <div className="mt-5 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           <label className="grid gap-2 text-sm font-semibold text-slate-700">Supplier
-            <select className={inputClass} value={supplier} onChange={(event) => setSupplier(event.target.value)}>
-              <option value="">Select a supplier</option>
-              {suppliers.map((item) => <option key={item.name} value={item.name}>{item.supplier_name || item.name}</option>)}
-            </select>
+            <WmsSelect value={supplier} onChange={setSupplier} options={supplierOptions} placeholder="Search suppliers..." />
           </label>
+          {companies.length > 1 ? (
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">Company
+              <WmsSelect value={company} onChange={setCompany} options={companyOptions} placeholder="Select a company..." />
+            </label>
+          ) : null}
+          {companiesUnavailable ? (
+            <label className="grid gap-2 text-sm font-semibold text-slate-700">Company
+              <input className={inputClass} value={company} onChange={(event) => setCompany(event.target.value)} placeholder="Exact ERPNext Company name" />
+              <span className="text-xs text-rose-600">{companiesError || "No Companies came back from ERPNext."} <button type="button" onClick={loadCompanies} className="font-semibold underline">Retry</button></span>
+            </label>
+          ) : null}
           <label className="grid gap-2 text-sm font-semibold text-slate-700">Required by
             <input type="date" className={inputClass} min={minDate} value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} />
           </label>
           <label className="grid gap-2 text-sm font-semibold text-slate-700">Target warehouse (optional)
-            <select className={inputClass} value={warehouse} onChange={(event) => setWarehouse(event.target.value)}>
-              <option value="">No default warehouse</option>
-              {warehouses.map((item) => <option key={item.name} value={item.name}>{item.warehouse_name || item.name}</option>)}
-            </select>
+            <WmsSelect value={warehouse} onChange={setWarehouse} options={warehouseOptions} placeholder={company ? "Search warehouses..." : "Choose a company first"} disabled={!company} />
           </label>
         </div>
       </section>
@@ -126,18 +181,12 @@ export default function WmsPurchaseOrderForm() {
         <div className="mt-4 space-y-3">
           {!lines.length ? <p className="rounded-2xl border border-dashed border-slate-300 px-4 py-5 text-center text-sm text-slate-500">Search and add one or more items to begin.</p> : null}
           {lines.map((line) => (
-            <div key={line.id} className="grid gap-3 rounded-2xl border border-slate-200 p-4 md:grid-cols-[1.4fr_0.8fr_0.8fr_0.9fr_1fr_auto] md:items-center">
+            <div key={line.id} className="grid gap-3 rounded-2xl border border-slate-200 p-4 md:grid-cols-[1.3fr_0.7fr_0.9fr_0.8fr_1fr_auto] md:items-center">
               <div><p className="font-semibold text-slate-900">{line.itemName}</p><p className="text-xs text-slate-500">{line.itemCode}</p></div>
               <input type="number" min="0.0001" step="0.0001" className={inputClass} value={line.qty} onChange={(event) => updateLine(line.id, { qty: event.target.value })} placeholder="Qty" />
-              <select className={inputClass} value={line.uom} onChange={(event) => updateLine(line.id, { uom: event.target.value })}>
-                {!uoms.some((u) => u.name === line.uom) && line.uom ? <option value={line.uom}>{line.uom}</option> : null}
-                {uoms.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}
-              </select>
+              <WmsSelect value={line.uom} onChange={(value) => updateLine(line.id, { uom: value })} options={uomOptions} placeholder="UOM..." />
               <input type="number" min="0" step="0.01" className={inputClass} value={line.rate} onChange={(event) => updateLine(line.id, { rate: event.target.value })} placeholder="Rate" />
-              <select className={inputClass} value={line.warehouse} onChange={(event) => updateLine(line.id, { warehouse: event.target.value })}>
-                <option value="">Use target warehouse</option>
-                {warehouses.map((item) => <option key={item.name} value={item.name}>{item.warehouse_name || item.name}</option>)}
-              </select>
+              <WmsSelect value={line.warehouse} onChange={(value) => updateLine(line.id, { warehouse: value })} options={warehouseOptions} placeholder="Use target warehouse" disabled={!company} />
               <button type="button" onClick={() => removeLine(line.id)} className="text-sm font-semibold text-rose-600">Remove</button>
             </div>
           ))}

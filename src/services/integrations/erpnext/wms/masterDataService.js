@@ -44,6 +44,16 @@ const RESOURCE_DEFINITIONS = {
     filters: [["Purchase Receipt", "docstatus", "!=", 2]],
     searchFields: ["name", "supplier", "supplier_name"],
   },
+  companies: {
+    doctype: "Company",
+    // Company has no `disabled` field (unlike Item/Warehouse/Supplier) —
+    // requesting one made Frappe reject the whole query with "Field not
+    // permitted in query: disabled".
+    fields: ["name", "company_name", "default_currency"],
+    orderBy: "company_name asc",
+    filters: [["Company", "is_group", "=", 0]],
+    searchFields: ["name", "company_name"],
+  },
 };
 
 export function isWmsResource(resource) {
@@ -56,7 +66,7 @@ function safeNumber(value, fallback, max) {
   return Math.min(max, Math.max(0, Math.floor(parsed)));
 }
 
-function buildQuery(definition, { page = 1, pageSize = 25, search = "" } = {}) {
+function buildQuery(definition, { page = 1, pageSize = 25, search = "", extraFilters } = {}) {
   const limitPageLength = Math.min(100, Math.max(1, safeNumber(pageSize, 25, 100)));
   const limitStart = Math.max(0, (safeNumber(page, 1, 100000) - 1) * limitPageLength);
   const params = new URLSearchParams({
@@ -65,7 +75,8 @@ function buildQuery(definition, { page = 1, pageSize = 25, search = "" } = {}) {
     limit_start: String(limitStart),
     order_by: definition.orderBy,
   });
-  if (definition.filters?.length) params.set("filters", JSON.stringify(definition.filters));
+  const filters = [...(definition.filters || []), ...(extraFilters || [])];
+  if (filters.length) params.set("filters", JSON.stringify(filters));
   // Frappe's /api/resource list endpoint has no generic `search` param — it only
   // understands `filters`/`or_filters`. Build an OR group of `like` filters instead.
   const term = String(search).trim().slice(0, 100);

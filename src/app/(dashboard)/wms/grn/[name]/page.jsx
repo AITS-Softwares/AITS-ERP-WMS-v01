@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token") || ""}` };
@@ -31,7 +30,7 @@ export default function WmsGrnDetailPage() {
     <div className="space-y-6">
       <section className="flex flex-col justify-between gap-4 rounded-3xl bg-slate-950 p-6 text-white md:flex-row md:items-end md:p-8 print:hidden">
         <div><p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">GRN · Purchase Receipt</p><h1 className="mt-2 text-3xl font-bold">{doc.name}</h1><p className="mt-2 text-sm text-slate-300">{doc.supplier_name || doc.supplier} · ERPNext status: {doc.status}</p></div>
-        <div className="flex gap-3"><button type="button" onClick={() => window.print()} className="rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950">Print label / receipt</button><Link href="/wms/grn" className="rounded-xl border border-white/30 px-5 py-2.5 text-sm font-bold text-white">Back to list</Link></div>
+        <button type="button" onClick={() => window.print()} className="w-max rounded-xl bg-cyan-400 px-5 py-2.5 text-sm font-bold text-slate-950">Print label / receipt</button>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">

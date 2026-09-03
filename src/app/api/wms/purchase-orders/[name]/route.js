@@ -2,13 +2,8 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { getWarehouseSession } from "@/lib/wmsAuth";
-import { ERPNextError } from "@/services/integrations/erpnext/erpnextClient";
+import { wmsErrorResponse } from "@/lib/wmsApiError";
 import { getPurchaseOrder, submitPurchaseOrder } from "@/services/integrations/erpnext/wms/purchaseOrderService";
-
-function errorResponse(error) {
-  const status = error instanceof ERPNextError ? (error.status || 502) : (error.status || 500);
-  return NextResponse.json({ success: false, message: error.message || "ERPNext request failed" }, { status });
-}
 
 export async function GET(req, { params }) {
   try {
@@ -18,7 +13,7 @@ export async function GET(req, { params }) {
     const doc = await getPurchaseOrder(user.companyId, decodeURIComponent(name));
     return NextResponse.json({ success: true, data: doc }, { headers: { "Cache-Control": "private, max-age=15" } });
   } catch (error) {
-    return errorResponse(error);
+    return wmsErrorResponse(error);
   }
 }
 
@@ -31,6 +26,6 @@ export async function PATCH(req, { params }) {
     const doc = await submitPurchaseOrder(user.companyId, decodeURIComponent(name));
     return NextResponse.json({ success: true, message: `Purchase Order ${doc.name} submitted to ERPNext.`, data: doc });
   } catch (error) {
-    return errorResponse(error);
+    return wmsErrorResponse(error);
   }
 }

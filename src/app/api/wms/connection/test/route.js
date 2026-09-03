@@ -6,13 +6,14 @@ import { getWarehouseSession } from "@/lib/wmsAuth";
 import ErpNextConnection from "@/models/ErpNextConnection";
 import { buildERPNextConfig } from "@/services/integrations/erpnext/connectionService";
 import { ERPNextError, erpnextRequestWithConfig } from "@/services/integrations/erpnext/erpnextClient";
+import { getERPNextErrorMessage } from "@/services/integrations/erpnext/distributorAppService";
 
 function messageFor(error) {
   if (error.code === "CONFIG_MISSING") return "ERPNext URL, API key, or API secret is missing.";
   if (error.code === "AUTH_FAILED") return "ERPNext rejected the API key or secret.";
   if (error.code === "TIMEOUT") return "ERPNext did not respond in time.";
   if (error.code === "NETWORK_ERROR") return "ERPNext could not be reached.";
-  return error.message || "ERPNext connection test failed.";
+  return getERPNextErrorMessage(error);
 }
 
 export async function POST(req) {

@@ -2,14 +2,9 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { getWarehouseSession } from "@/lib/wmsAuth";
-import { ERPNextError } from "@/services/integrations/erpnext/erpnextClient";
+import { wmsErrorResponse } from "@/lib/wmsApiError";
 import { getWmsMasterRecords } from "@/services/integrations/erpnext/wms/masterDataService";
 import { createPurchaseOrder, listOpenPurchaseOrders } from "@/services/integrations/erpnext/wms/purchaseOrderService";
-
-function errorResponse(error) {
-  const status = error instanceof ERPNextError ? (error.status || 502) : (error.status || 500);
-  return NextResponse.json({ success: false, message: error.message || "ERPNext request failed" }, { status });
-}
 
 export async function GET(req) {
   try {
@@ -29,7 +24,7 @@ export async function GET(req) {
     });
     return NextResponse.json({ success: true, data }, { headers: { "Cache-Control": "private, max-age=30" } });
   } catch (error) {
-    return errorResponse(error);
+    return wmsErrorResponse(error);
   }
 }
 
@@ -46,6 +41,6 @@ export async function POST(req) {
       data: doc,
     });
   } catch (error) {
-    return errorResponse(error);
+    return wmsErrorResponse(error);
   }
 }

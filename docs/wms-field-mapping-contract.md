@@ -25,6 +25,17 @@ orders, warehouses, UOMs, batches, serial numbers, or barcodes to MongoDB.
 | GRN (create) | Purchase Receipt | `supplier`, `company`, `set_warehouse`, `posting_date`, `items.item_code`, `items.uom`, `items.qty`, `items.rejected_qty`, `items.batch_no`, `items.warehouse`, `items.purchase_order`, `items.purchase_order_item`, `items.rate` | Insert **and submit** in one action ("Confirm GRN") — this is the real stock-in event; ERPNext's ledger updates immediately. Item code, UOM, and rate are always taken from the linked Purchase Order row, never trusted from the browser. |
 | GRN detail / print | Purchase Receipt | full document | Read-only view with a browser print action (label/receipt stub). |
 
+## Phase 3 coverage (Master Carton UOM + barcode)
+
+Per the DECISION in the original plan: UOM-based, using ERPNext's own Item UOM
+and Item Barcode child tables. No custom doctype, no parallel barcode table.
+
+| WMS screen | ERPNext doctype | Required ERPNext fields | Write behaviour |
+| --- | --- | --- | --- |
+| Item & Carton Setup | Item, UOM | `item.uoms[].uom` (`"Master Carton"`), `item.uoms[].conversion_factor` | Ensures a UOM named "Master Carton" exists (inserts it once if missing), then `PUT /api/resource/Item/{code}` with the full `uoms` array (Frappe replaces a child table wholesale, so the existing rows are read first and only the Master Carton row is added/updated). |
+| Item & Carton Setup (barcode) | Item | `item.barcodes[].barcode`, `item.barcodes[].uom` | Generates a deterministic value (`ITEMCODE-UOM`, alphanumeric) client of ERPNext, then the same read-then-`PUT` pattern appends it to `barcodes`. Idempotent — re-running returns the existing barcode instead of creating a duplicate row. |
+| GRN barcode scan | Item, Item Barcode (child) | `barcode`, matched item's `uoms[].conversion_factor` | Read-only lookup (`GET /api/wms/barcode-lookup?code=`). Filters `Item` by the child table `Item Barcode.barcode`, then reads the matched Item's full doc to get the UOM and its conversion factor. Each resolved scan adds that many units to the matching GRN line's received qty — never creates or edits an ERPNext document itself. |
+
 ## Implementation rule for later phases
 
 1. Read the current document from ERPNext before editing it.
@@ -39,3 +50,10 @@ orders, warehouses, UOMs, batches, serial numbers, or barcodes to MongoDB.
 - Purchase Order "edit" (changing a saved draft's lines) is not implemented — only create, submit, and read. Editing a draft has to go through ERPNext directly for now.
 - GRN batch number is a free-text field sent through as `items.batch_no` regardless of the item's `has_batch_no` flag; ERPNext validates/rejects it server-side. The screen does not yet hide the field for non-batch items.
 - The GRN screen does not cap "Received qty" at the PO's pending quantity — ERPNext's own validation is the backstop, matching the "ERPNext is the only source of truth" rule above.
+
+## Known Phase 3 simplifications
+
+- Camera-based scanning uses the browser's native `BarcodeDetector` API where available (Chrome/Edge on Android today) and is hidden otherwise — no third-party camera/ML library was added. The USB/keyboard-wedge scanner path (a plain text input + Enter) is the supported baseline per the plan's Open Item #3 and works everywhere.
+- Barcode values are generated internally (`ITEMCODE-UOM`), not real GS1/EAN codes — this is a warehouse-internal identifier, not a retail barcode, consistent with "no parallel barcode table" but scoped to AITSERP-generated values only.
+- The "Master Carton" UOM name is fixed/shared across all items (as the plan's DECISION specifies), not configurable per company.
+- The barcode/scan display toggle in WMS Setup is a per-device `localStorage` preference, not a per-role RBAC setting — it hides the scan UI on request but does not gate the underlying `/api/wms/barcode-lookup` endpoint.

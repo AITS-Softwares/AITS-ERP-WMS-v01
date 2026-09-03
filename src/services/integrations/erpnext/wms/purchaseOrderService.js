@@ -86,9 +86,11 @@ export async function createPurchaseOrder(companyId, input = {}, { submit = fals
   if (items.some((line) => line.rate < 0)) throw badRequest("Rate cannot be negative");
 
   const { config } = await resolveWmsErpnextContext(companyId);
-  // Reuses the distributor module's Company resolver — same ERPNext site, same
-  // Company. Its error text is written for Sales Orders, so reword it here.
-  const company = await resolveERPNextTransactionCompany(config, {}).catch((error) => {
+  // An explicit Company from the form wins — required on multi-company ERPNext
+  // sites. Falls back to the distributor module's resolver (env var / user
+  // default / the-only-company) so single-company sites need zero extra input.
+  const explicitCompany = text(input.company);
+  const company = explicitCompany || await resolveERPNextTransactionCompany(config, {}).catch((error) => {
     error.message = String(error.message || "").replace(/Sales Orders?/gi, "Purchase Orders");
     throw error;
   });

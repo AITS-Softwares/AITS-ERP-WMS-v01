@@ -2,13 +2,8 @@ export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { getWarehouseSession } from "@/lib/wmsAuth";
-import { ERPNextError } from "@/services/integrations/erpnext/erpnextClient";
+import { wmsErrorResponse } from "@/lib/wmsApiError";
 import { createPurchaseReceipt, listPurchaseReceipts } from "@/services/integrations/erpnext/wms/purchaseReceiptService";
-
-function errorResponse(error) {
-  const status = error instanceof ERPNextError ? (error.status || 502) : (error.status || 500);
-  return NextResponse.json({ success: false, message: error.message || "ERPNext request failed" }, { status });
-}
 
 export async function GET(req) {
   try {
@@ -22,7 +17,7 @@ export async function GET(req) {
     });
     return NextResponse.json({ success: true, data }, { headers: { "Cache-Control": "private, max-age=30" } });
   } catch (error) {
-    return errorResponse(error);
+    return wmsErrorResponse(error);
   }
 }
 
@@ -36,6 +31,6 @@ export async function POST(req) {
     const doc = await createPurchaseReceipt(user.companyId, body);
     return NextResponse.json({ success: true, message: `GRN ${doc.name} submitted. ERPNext stock has been updated.`, data: doc });
   } catch (error) {
-    return errorResponse(error);
+    return wmsErrorResponse(error);
   }
 }

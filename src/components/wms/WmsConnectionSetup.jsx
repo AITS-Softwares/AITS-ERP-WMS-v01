@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { isWmsBarcodeUiEnabled, setWmsBarcodeUiEnabled } from "@/components/wms/wmsBarcodePreference";
 
 const emptyForm = { label: "Primary ERPNext", baseUrl: "", apiKey: "", apiSecret: "", apiKeyPreview: "", hasApiSecret: false, lastTestStatus: "", lastTestMessage: "" };
 
@@ -10,6 +11,14 @@ export default function WmsConnectionSetup() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [notice, setNotice] = useState(null);
+  const [barcodeUiEnabled, setBarcodeUiEnabled] = useState(true);
+
+  useEffect(() => { setBarcodeUiEnabled(isWmsBarcodeUiEnabled()); }, []);
+  function toggleBarcodeUi() {
+    const next = !barcodeUiEnabled;
+    setBarcodeUiEnabled(next);
+    setWmsBarcodeUiEnabled(next);
+  }
 
   const request = (url, options = {}) => fetch(url, { ...options, headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token") || ""}`, ...(options.headers || {}) } });
   const show = (tone, message) => setNotice({ tone, message });
@@ -75,6 +84,13 @@ export default function WmsConnectionSetup() {
         <div className="mt-6 flex flex-wrap gap-3"><button type="button" disabled={saving || loading} onClick={save} className="rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">{saving ? "Saving..." : "Save connection"}</button><button type="button" disabled={testing || saving || loading} onClick={testConnection} className="rounded-xl border border-slate-300 px-5 py-2.5 text-sm font-bold text-slate-700 disabled:opacity-60">{testing ? "Testing..." : "Test saved connection"}</button></div>
       </section>
       <p className="rounded-2xl border border-cyan-100 bg-cyan-50 px-4 py-3 text-sm leading-6 text-cyan-900"><strong>Safe by design:</strong> API secrets are encrypted in the AITSERP database and are never returned to the browser after saving.</p>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+        <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div><h2 className="text-lg font-bold">Barcode scanning UI</h2><p className="mt-1 max-w-xl text-sm text-slate-500">Hides the scan input and barcode labels on this device (e.g. an office workstation with no scanner). ERPNext's Item Barcode / UOM data stays connected either way — this only affects what's shown here.</p></div>
+          <button type="button" onClick={toggleBarcodeUi} className={`w-max rounded-xl px-5 py-2.5 text-sm font-bold ${barcodeUiEnabled ? "bg-slate-950 text-white" : "border border-slate-300 text-slate-700"}`}>{barcodeUiEnabled ? "Shown on this device" : "Hidden on this device"}</button>
+        </div>
+      </section>
     </div>
   );
 }
