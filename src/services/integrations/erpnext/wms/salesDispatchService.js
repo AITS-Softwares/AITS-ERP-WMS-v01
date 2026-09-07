@@ -1,5 +1,5 @@
 import { resolveWmsErpnextContext } from "@/services/integrations/erpnext/wms/masterDataService";
-import { getERPNextDoc, insertAndSubmitERPNextDoc } from "@/services/integrations/erpnext/wms/wmsDocumentHelpers";
+import { getERPNextDoc, insertAndSubmitERPNextDoc, submitERPNextDoc } from "@/services/integrations/erpnext/wms/wmsDocumentHelpers";
 
 function badRequest(message) { const error = new Error(message); error.status = 400; return error; }
 function text(value) { return String(value ?? "").trim(); }
@@ -13,6 +13,22 @@ export async function getSalesOrderForDispatch(companyId, name) {
   const doc = await getERPNextDoc(config, "Sales Order", salesOrder);
   if (!doc) throw badRequest("Sales Order was not found in ERPNext");
   return doc;
+}
+
+export async function submitSalesOrderForDispatch(companyId, name) {
+  const salesOrder = await getSalesOrderForDispatch(companyId, name);
+  if (Number(salesOrder.docstatus) !== 0) {
+    throw badRequest(`Sales Order ${salesOrder.name} is already submitted or cannot be submitted.`);
+  }
+  if (!text(salesOrder.customer)) throw badRequest("ERPNext requires a customer before submitting this Sales Order.");
+  if (!(salesOrder.items || []).length) throw badRequest("ERPNext requires at least one item before submitting this Sales Order.");
+  if ((salesOrder.items || []).some((item) => !text(item.item_code) || number(item.qty) <= 0)) {
+    throw badRequest("Every Sales Order item must have an item code and a quantity greater than zero.");
+  }
+  const { config } = await resolveWmsErpnextContext(companyId);
+  // ERPNext performs the final accounting, pricing, tax, credit-limit, and
+  // stock validations. Nothing is submitted if any of those checks fail.
+  return submitERPNextDoc(config, salesOrder);
 }
 
 export async function createSalesStockOut(companyId, input = {}) {
