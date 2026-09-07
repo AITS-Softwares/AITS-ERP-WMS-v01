@@ -28,12 +28,7 @@ const MODULE_ROUTE_MAP = {
   "Sales Invoice": [
     { label: "Invoice View",     path: "/admin/sales-invoice-view",   needsView: true },
   ],
-  "Delivery": [
-    { label: "Delivery View",    path: "/admin/delivery-view",        needsView: true },
-  ],
-  "Credit Memo": [
-    { label: "Credit Memo View", path: "/admin/credit-memo-veiw",     needsView: true },
-  ],
+  
   "Sales Report": [
     { label: "Sales Report",     path: "/admin/sales-report",         needsView: true },
     { label: "Sales Board",      path: "/admin/sales-board",          needsView: true },

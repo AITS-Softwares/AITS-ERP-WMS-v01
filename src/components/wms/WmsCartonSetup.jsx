@@ -17,6 +17,7 @@ export default function WmsCartonSetup() {
   const [selectedCode, setSelectedCode] = useState("");
   const [setup, setSetup] = useState(null);
   const [conversionFactor, setConversionFactor] = useState("");
+  const [selectedUom, setSelectedUom] = useState("");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -38,6 +39,7 @@ export default function WmsCartonSetup() {
       if (!response.ok) throw new Error(payload.message || "Unable to load this item.");
       setSetup(payload.data);
       setConversionFactor(payload.data.cartonConversionFactor ? String(payload.data.cartonConversionFactor) : "");
+      setSelectedUom(payload.data.stockUom || "");
     } catch (error) {
       setNotice({ tone: "error", message: error.message || "Unable to load this item." });
     } finally {
@@ -142,6 +144,25 @@ export default function WmsCartonSetup() {
                 <input type="number" min="0.0001" step="0.0001" className={inputClass} value={conversionFactor} onChange={(event) => setConversionFactor(event.target.value)} placeholder="e.g. 24" />
               </label>
               <button type="button" disabled={saving || !(Number(conversionFactor) > 0)} onClick={saveConversion} className="self-end rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{saving ? "Saving..." : "Save conversion"}</button>
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
+            <h2 className="text-lg font-bold">Units of Measure</h2>
+            <p className="mt-1 text-sm text-slate-500">Available UOMs are read directly from this Item in ERPNext.</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr]">
+              <label className="grid gap-2 text-sm font-semibold text-slate-700">
+                Select UOM
+                <select value={selectedUom} onChange={(event) => setSelectedUom(event.target.value)} className={inputClass}>
+                  <option value={setup.stockUom}>{setup.stockUom} (Base UOM)</option>
+                  {(setup.uoms || []).filter((row) => row.uom !== setup.stockUom).map((row) => <option key={row.uom} value={row.uom}>{row.uom}</option>)}
+                </select>
+              </label>
+              <div className="rounded-xl bg-slate-50 p-4 text-sm">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Selected UOM</p>
+                <p className="mt-1 text-lg font-bold text-slate-900">{selectedUom || "-"}</p>
+                <p className="mt-1 text-xs text-slate-500">Conversion factor: {selectedUom === setup.stockUom ? 1 : (setup.uoms || []).find((row) => row.uom === selectedUom)?.conversionFactor || "-"}</p>
+              </div>
             </div>
           </section>
 

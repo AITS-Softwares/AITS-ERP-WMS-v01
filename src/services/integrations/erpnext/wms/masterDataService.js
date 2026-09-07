@@ -5,9 +5,12 @@ import { erpnextRequestWithConfig } from "@/services/integrations/erpnext/erpnex
 const RESOURCE_DEFINITIONS = {
   items: {
     doctype: "Item",
-    fields: ["name", "item_code", "item_name", "item_group", "stock_uom", "disabled", "is_stock_item", "has_batch_no", "has_serial_no", "modified"],
+    fields: ["name", "item_code", "item_name", "item_group", "custom_item_type", "stock_uom", "disabled", "is_stock_item", "has_batch_no", "has_serial_no", "modified"],
     orderBy: "modified desc",
-    filters: [["Item", "disabled", "=", 0]],
+    filters: [
+      ["Item", "disabled", "=", 0],
+      ["Item", "custom_item_type", "=", "Finished Goods"],
+    ],
     searchFields: ["item_code", "item_name"],
   },
   warehouses: {
@@ -29,6 +32,19 @@ const RESOURCE_DEFINITIONS = {
     orderBy: "modified desc",
     filters: [["Purchase Order", "docstatus", "!=", 2]],
     searchFields: ["name", "supplier", "supplier_name"],
+  },
+  "sales-orders": {
+    doctype: "Sales Order",
+    fields: ["name", "customer", "customer_name", "transaction_date", "delivery_date", "set_warehouse", "status", "docstatus", "grand_total", "currency", "per_delivered", "modified"],
+    orderBy: "modified desc",
+    // A Sales Dispatch starts from a Sales Order that still needs warehouse
+    // action. Keep cancelled orders out and apply the requested ERPNext
+    // statuses on the server, rather than exposing a UI filter.
+    filters: [
+      ["Sales Order", "docstatus", "!=", 2],
+      ["Sales Order", "status", "in", ["Draft", "On Hold", "To Deliver", "To Deliver and Bill"]],
+    ],
+    searchFields: ["name", "customer", "customer_name"],
   },
   suppliers: {
     doctype: "Supplier",

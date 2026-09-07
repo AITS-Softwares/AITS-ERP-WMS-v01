@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiArrowLeft, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiMapPin, FiShoppingCart, FiTag } from "react-icons/fi";
+import { FiArrowLeft, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiMapPin, FiShoppingCart, FiTag, FiTruck } from "react-icons/fi";
 
 // Ordered by how often a warehouse operator uses each screen.
 const navigation = [
@@ -13,6 +13,7 @@ const navigation = [
   { href: "/wms/items", label: "Items", shortLabel: "Items", icon: FiBox },
   { href: "/wms/warehouses", label: "Warehouses", shortLabel: "Warehouses", icon: FiMapPin },
   { href: "/wms/carton-setup", label: "Carton Setup", shortLabel: "Cartons", icon: FiTag },
+  { href: "/wms/sales-dispatch", label: "Sales Dispatch", shortLabel: "Dispatch", icon: FiTruck },
   { href: "/wms/uoms", label: "Units of Measure", shortLabel: "UOM", icon: FiDatabase },
   { href: "/wms/setup", label: "ERPNext Connection", shortLabel: "Connection", icon: FiLink },
 ];
