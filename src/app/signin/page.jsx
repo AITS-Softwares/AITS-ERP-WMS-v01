@@ -63,20 +63,7 @@ export default function LoginPage() {
 
       toast.success(`Access Granted: ${finalUser.name || "User"}`);
 
-      let redirect = "/admin";
-
-      if (mode === "Customer") {
-        redirect = "/customer-dashboard";
-      } else if (mode === "User") {
-        const roles = finalUser?.roles?.map((r) => r.toLowerCase()) || [];
-        if (roles.includes("employee")) {
-          redirect = "/admin/hr/employees";
-        } else if (roles.includes("admin")) {
-          redirect = "/admin";
-        }
-      }
-
-      router.push(redirect);
+      router.push("/wms");
     } catch (error) {
       toast.error(error?.response?.data?.message || "Verification Failed");
     } finally {

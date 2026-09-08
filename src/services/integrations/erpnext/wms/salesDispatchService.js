@@ -46,7 +46,7 @@ export async function createSalesStockOut(companyId, input = {}) {
     if (qty > remainingQty) throw badRequest(`${source.item_code} can dispatch only ${remainingQty} more ${source.uom || source.stock_uom || "units"}.`);
     const warehouse = text(line.warehouse) || text(source.warehouse) || text(salesOrder.set_warehouse);
     if (!warehouse) throw badRequest(`A source warehouse is required for ${source.item_code}.`);
-    return { item_code: source.item_code, item_name: source.item_name, qty, uom: source.uom || source.stock_uom, stock_uom: source.stock_uom || source.uom, conversion_factor: number(source.conversion_factor, 1) || 1, rate: number(source.rate), warehouse, sales_order: salesOrder.name, so_detail: source.name };
+    return { item_code: source.item_code, item_name: source.item_name, qty, uom: source.uom || source.stock_uom, stock_uom: source.stock_uom || source.uom, conversion_factor: number(source.conversion_factor, 1) || 1, rate: number(source.rate), warehouse, sales_order: salesOrder.name, against_sales_order: salesOrder.name, so_detail: source.name };
   }).filter(Boolean);
   if (!items.length) throw badRequest("Select at least one item and enter a Stock Out quantity.");
 

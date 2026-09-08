@@ -16,10 +16,8 @@ export default function WmsCartonSetup() {
   const [itemResults, setItemResults] = useState([]);
   const [selectedCode, setSelectedCode] = useState("");
   const [setup, setSetup] = useState(null);
-  const [conversionFactor, setConversionFactor] = useState("");
   const [selectedUom, setSelectedUom] = useState("");
   const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [notice, setNotice] = useState(null);
 
@@ -38,7 +36,6 @@ export default function WmsCartonSetup() {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || "Unable to load this item.");
       setSetup(payload.data);
-      setConversionFactor(payload.data.cartonConversionFactor ? String(payload.data.cartonConversionFactor) : "");
       setSelectedUom(payload.data.stockUom || "");
     } catch (error) {
       setNotice({ tone: "error", message: error.message || "Unable to load this item." });
@@ -64,25 +61,6 @@ export default function WmsCartonSetup() {
     if (preselected) selectByCode(preselected);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function saveConversion() {
-    try {
-      setSaving(true); setNotice(null);
-      const response = await fetch(`/api/wms/items/${encodeURIComponent(selectedCode)}/carton`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ conversionFactor }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.message || "Unable to save the Master Carton conversion.");
-      setSetup(payload.data);
-      setNotice({ tone: "success", message: payload.message });
-    } catch (error) {
-      setNotice({ tone: "error", message: error.message || "Unable to save the Master Carton conversion." });
-    } finally {
-      setSaving(false);
-    }
-  }
 
   async function generateBarcode() {
     try {
@@ -111,7 +89,7 @@ export default function WmsCartonSetup() {
       <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-lg md:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Phase 3 · Barcode &amp; Master Carton</p>
         <h1 className="mt-2 text-3xl font-bold">Item &amp; Carton Setup</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Defines each item's Master Carton UOM and conversion factor, and registers its barcode directly on ERPNext's Item — standard Item UOM and Item Barcode tables, nothing custom.</p>
+        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Shows the Item UOMs already configured in ERPNext and registers a barcode for its existing Master Carton UOM.</p>
       </section>
       {notice ? <div className={`rounded-2xl border px-4 py-3 text-sm ${notice.tone === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>{notice.message}</div> : null}
 
@@ -137,18 +115,7 @@ export default function WmsCartonSetup() {
       {setup && !loading ? (
         <>
           <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-            <h2 className="text-lg font-bold">{setup.itemName}</h2>
-            <p className="text-sm text-slate-500">{setup.itemCode} · Base UOM: {setup.stockUom}</p>
-            <div className="mt-5 grid gap-4 sm:grid-cols-[1fr_auto]">
-              <label className="grid gap-2 text-sm font-semibold text-slate-700">Master Carton conversion factor (1 Master Carton = this many {setup.stockUom})
-                <input type="number" min="0.0001" step="0.0001" className={inputClass} value={conversionFactor} onChange={(event) => setConversionFactor(event.target.value)} placeholder="e.g. 24" />
-              </label>
-              <button type="button" disabled={saving || !(Number(conversionFactor) > 0)} onClick={saveConversion} className="self-end rounded-xl bg-slate-950 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-50">{saving ? "Saving..." : "Save conversion"}</button>
-            </div>
-          </section>
-
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">
-            <h2 className="text-lg font-bold">Units of Measure</h2>
+            <h2 className="text-lg font-bold">{setup.itemName} · Units of Measure</h2>
             <p className="mt-1 text-sm text-slate-500">Available UOMs are read directly from this Item in ERPNext.</p>
             <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_1fr]">
               <label className="grid gap-2 text-sm font-semibold text-slate-700">
@@ -171,7 +138,7 @@ export default function WmsCartonSetup() {
               <h2 className="text-lg font-bold">Master Carton barcode</h2>
               <button type="button" disabled={generating || !setup.cartonConversionFactor} onClick={generateBarcode} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-bold text-slate-700 disabled:opacity-50">{generating ? "Loading..." : cartonBarcode ? "Refresh barcode" : "Generate barcode"}</button>
             </div>
-            {!setup.cartonConversionFactor ? <p className="mt-2 text-xs text-slate-500">Save a conversion factor above before registering a Master Carton barcode.</p> : null}
+            {!setup.cartonConversionFactor ? <p className="mt-2 text-xs text-slate-500">Configure a Master Carton conversion in ERPNext before registering its barcode.</p> : null}
             {cartonBarcode ? (
               <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-5 print:border-none">
                 <p className="text-sm font-semibold text-slate-900">{setup.itemName}</p>

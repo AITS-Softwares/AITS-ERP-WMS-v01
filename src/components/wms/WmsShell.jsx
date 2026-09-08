@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiArrowLeft, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiMapPin, FiShoppingCart, FiTag, FiTruck } from "react-icons/fi";
+import { FiArrowLeft, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiLogOut, FiMapPin, FiShoppingCart, FiTag, FiTruck } from "react-icons/fi";
 
 // Ordered by how often a warehouse operator uses each screen.
 const navigation = [
@@ -54,6 +54,11 @@ export default function WmsShell({ children }) {
 
   const backHref = parentHref(pathname);
   const backLabel = navigation.find((item) => item.href === backHref)?.label || "Back";
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.replace("/signin");
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
@@ -63,7 +68,7 @@ export default function WmsShell({ children }) {
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-400 font-black text-slate-950">W</span>
             <span><span className="block text-base font-bold tracking-wide">AITSERP WMS</span><span className="block text-xs text-slate-400">ERPNext-connected warehouse operations</span></span>
           </Link>
-          <div className="hidden text-right text-sm md:block"><p className="font-semibold">{user.name || user.email}</p><p className="text-xs text-slate-400">Warehouse workspace</p></div>
+          <div className="flex items-center gap-3"><div className="hidden text-right text-sm md:block"><p className="font-semibold">{user.name || user.email}</p><p className="text-xs text-slate-400">Warehouse workspace</p></div><button type="button" onClick={logout} className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"><FiLogOut size={16} /><span className="hidden sm:inline">Logout</span></button></div>
         </div>
       </header>
 
