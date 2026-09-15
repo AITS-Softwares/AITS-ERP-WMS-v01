@@ -133,12 +133,31 @@ export async function getWmsMasterRecords(companyId, resource, options = {}) {
   return { resource, doctype: definition.doctype, records, page, pageSize, hasMore: records.length === pageSize, connectionLabel: connection.label };
 }
 
+async function getWmsMasterRecordCount(companyId, resource) {
+  let page = 1;
+  let total = 0;
+  // ERPNext returns a maximum of 100 records per request. Count every page
+  // so dashboard totals are live rather than fixed to the first page.
+  while (page <= 500) {
+    const result = await getWmsMasterRecords(companyId, resource, { page, pageSize: 100 });
+    total += result.records.length;
+    if (!result.hasMore || !result.records.length) break;
+    page += 1;
+  }
+  return total;
+}
+
 export async function getWmsDashboardData(companyId) {
-  const [items, warehouses, purchaseOrders] = await Promise.all([
+  const [items, warehouses, purchaseOrders, salesOrders, itemCount, warehouseCount, purchaseOrderCount, salesOrderCount] = await Promise.all([
     getWmsMasterRecords(companyId, "items", { pageSize: 5 }),
     getWmsMasterRecords(companyId, "warehouses", { pageSize: 5 }),
     getWmsMasterRecords(companyId, "purchase-orders", { pageSize: 5 }),
+    getWmsMasterRecords(companyId, "sales-orders", { pageSize: 5 }),
+    getWmsMasterRecordCount(companyId, "items"),
+    getWmsMasterRecordCount(companyId, "warehouses"),
+    getWmsMasterRecordCount(companyId, "purchase-orders"),
+    getWmsMasterRecordCount(companyId, "sales-orders"),
   ]);
-  return { items, warehouses, purchaseOrders };
+  return { items, warehouses, purchaseOrders, salesOrders, counts: { items: itemCount, warehouses: warehouseCount, purchaseOrders: purchaseOrderCount, salesOrders: salesOrderCount } };
 }
 

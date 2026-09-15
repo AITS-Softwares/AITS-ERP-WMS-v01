@@ -1,32 +1,176 @@
 "use client";
 
 import Link from "next/link";
-import { FiArrowUpRight, FiBox, FiClipboard, FiLayers, FiPackage, FiTruck } from "react-icons/fi";
+import { useCallback, useEffect, useState } from "react";
+import { FiBox, FiTruck, FiMapPin, FiRefreshCw, FiTrendingUp } from "react-icons/fi";
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 
-const actions = [
-  { href: "/wms/sales-dispatch", label: "Sales Dispatch", description: "Submit orders and move stock out", icon: FiTruck, tone: "bg-cyan-500" },
-  { href: "/wms/grn/new", label: "Receive Stock", description: "Record a goods receipt note", icon: FiClipboard, tone: "bg-emerald-500" },
-  { href: "/wms/carton-setup", label: "Carton & Barcode", description: "View UOMs and print carton labels", icon: FiPackage, tone: "bg-violet-500" },
-  { href: "/wms/items", label: "Item Master", description: "Browse Finished Goods items", icon: FiBox, tone: "bg-amber-500" },
-];
+const COLORS = ["#06b6d4", "#8b5cf6", "#f59e0b"];
 
-const process = [
-  ["01", "Sales Order", "Choose a Draft or delivery-ready Sales Order."],
-  ["02", "Submit", "Validate and submit a Draft order in ERPNext."],
-  ["03", "Stock Out", "Select quantity and create the Delivery Note."],
-  ["04", "Track", "Check the Delivery Note and remaining quantity."],
-];
+function CountCard({ label, value, description, href, icon: Icon, tone }) {
+  return (
+    <Link
+      href={href}
+      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+    >
+      <div className={`absolute -right-6 -top-6 h-24 w-24 rounded-full opacity-10 blur-2xl ${tone}`} />
+      <div className="relative flex items-start justify-between">
+        <div>
+          <p className="text-sm font-semibold text-slate-500">{label}</p>
+          <p className="mt-2 text-4xl font-black text-slate-950">{value}</p>
+          <p className="mt-2 text-xs leading-5 text-slate-500">{description}</p>
+        </div>
+        <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-xl text-white shadow-md ${tone}`}>
+          <Icon size={20} />
+        </span>
+      </div>
+    </Link>
+  );
+}
 
 export default function WmsHomePage() {
-  return <div className="space-y-6 pb-6">
-    <section className="relative overflow-hidden rounded-3xl bg-slate-950 px-6 py-8 text-white shadow-xl md:px-10 md:py-11">
-      <div className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" /><div className="absolute bottom-0 right-20 h-40 w-40 rounded-full bg-violet-500/20 blur-3xl" />
-      <div className="relative max-w-3xl"><p className="inline-flex rounded-full border border-cyan-300/30 bg-cyan-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-cyan-200">AITSERP · Warehouse Control Center</p><h1 className="mt-5 text-3xl font-black leading-tight md:text-5xl">Every warehouse move, <span className="text-cyan-300">under control.</span></h1><p className="mt-4 max-w-2xl text-sm leading-7 text-slate-300">Process receiving, packaging, barcode labels, and customer dispatch from one simple workspace. ERPNext remains the source of truth.</p><div className="mt-7 flex flex-wrap gap-3"><Link href="/wms/sales-dispatch" className="inline-flex items-center gap-2 rounded-xl bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30">Start Sales Dispatch <FiArrowUpRight /></Link><Link href="/wms/grn/new" className="rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10">Receive Stock</Link></div></div>
+  const [data, setData] = useState(null);
+  const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      setRefreshing(true); setError("");
+      const response = await fetch("/api/wms/dashboard", { headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` } });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || "Unable to load WMS data.");
+      setData(payload.data);
+    } catch (loadError) { setError(loadError.message || "Unable to load WMS data."); }
+    finally { setRefreshing(false); }
+  }, []);
+
+  useEffect(() => {
+    loadDashboard();
+    const refreshTimer = setInterval(loadDashboard, 60000);
+    return () => clearInterval(refreshTimer);
+  }, [loadDashboard]);
+
+  const notConfigured = error.includes("not configured");
+
+  const chartData = data ? [
+    { name: "Items", count: data.counts?.items ?? 0 },
+    { name: "Warehouses", count: data.counts?.warehouses ?? 0 },
+    { name: "Sales Dispatch", count: data.counts?.salesOrders ?? 0 },
+  ] : [];
+
+  return <div className="space-y-6">
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-7 text-white shadow-xl md:p-10">
+      <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
+      <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-violet-500/20 blur-3xl" />
+      <div className="relative">
+        <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Phase 3 · Barcode &amp; Master Carton</p>
+        <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight md:text-4xl">Warehouse operations, connected directly to ERPNext.</h1>
+        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">This workspace is the new warehouse front end. ERPNext stays the only source of truth for stock, warehouses, purchase orders, UOMs, and barcode records.</p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <Link href="/wms/sales-dispatch" className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-300">Open Sales Dispatch</Link>
+          <Link href="/wms/grn/new" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Record a GRN</Link>
+          <Link href="/wms/carton-setup" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Item &amp; Carton Setup</Link>
+          <button type="button" onClick={loadDashboard} disabled={refreshing} className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"><FiRefreshCw className={refreshing ? "animate-spin" : ""} /> Refresh</button>
+        </div>
+      </div>
     </section>
 
-    <section><div className="mb-4 flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Quick actions</p><h2 className="mt-1 text-2xl font-bold text-slate-900">What do you want to do?</h2></div><p className="hidden text-sm text-slate-500 md:block">Choose an operation to begin</p></div><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{actions.map(({ href, label, description, icon: Icon, tone }) => <Link key={href} href={href} className="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-cyan-200 hover:shadow-lg"><span className={`grid h-11 w-11 place-items-center rounded-xl text-white ${tone}`}><Icon size={21} /></span><div className="mt-5 flex items-start justify-between gap-3"><div><h3 className="font-bold text-slate-900">{label}</h3><p className="mt-1 text-sm leading-5 text-slate-500">{description}</p></div><FiArrowUpRight className="mt-1 shrink-0 text-slate-300 transition group-hover:text-cyan-600" /></div></Link>)}</div></section>
+    {error ? (
+      <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
+        <p className="font-bold">WMS is not connected yet</p>
+        <p className="mt-1">{error}</p>
+        {notConfigured ? <Link href="/wms/setup" className="mt-3 inline-block font-bold underline">Open ERPNext connection setup</Link> : null}
+      </section>
+    ) : null}
 
-    <section className="grid gap-6 xl:grid-cols-[1.55fr_1fr]"><div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7"><div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-xl bg-slate-100 text-slate-700"><FiLayers size={20} /></span><div><h2 className="font-bold text-slate-900">Sales Dispatch flow</h2><p className="text-sm text-slate-500">From Sales Order to Delivery Note</p></div></div><div className="mt-7 grid gap-5 md:grid-cols-4">{process.map(([number, title, description], index) => <div key={title} className="relative"><span className="text-xs font-black tracking-widest text-cyan-600">{number}</span>{index < process.length - 1 ? <span className="absolute left-11 right-0 top-2 hidden h-px bg-slate-200 md:block" /> : null}<h3 className="mt-3 font-bold text-slate-900">{title}</h3><p className="mt-1 text-sm leading-5 text-slate-500">{description}</p></div>)}</div><Link href="/wms/sales-dispatch" className="mt-7 inline-flex items-center gap-2 text-sm font-bold text-cyan-700 hover:text-cyan-900">Open Sales Dispatch <FiArrowUpRight /></Link></div>
-      <aside className="rounded-2xl bg-gradient-to-br from-cyan-700 to-cyan-950 p-6 text-white shadow-lg"><p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-200">Warehouse tools</p><h2 className="mt-3 text-2xl font-bold">Set up before you move stock.</h2><p className="mt-3 text-sm leading-6 text-cyan-50/80">Confirm your ERPNext connection, item UOMs, and warehouse locations before creating live transactions.</p><div className="mt-6 space-y-2"><Link href="/wms/setup" className="flex items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold transition hover:bg-white/20"><span>ERPNext Connection</span><FiArrowUpRight /></Link><Link href="/wms/warehouses" className="flex items-center justify-between rounded-xl bg-white/10 px-4 py-3 text-sm font-semibold transition hover:bg-white/20"><span>Warehouses</span><FiArrowUpRight /></Link></div></aside></section>
+    {!error && !data ? (
+      <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">
+        Checking live ERPNext master data...
+      </div>
+    ) : null}
+
+    {data ? <>
+      {/* Stat cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <CountCard label="Finished Goods Items" value={data.counts?.items ?? "-"} description="Live ERPNext Finished Goods total" href="/wms/items" icon={FiBox} tone="bg-cyan-500" />
+        <CountCard label="Warehouses" value={data.counts?.warehouses ?? "-"} description="Live active ERPNext warehouses" href="/wms/warehouses" icon={FiMapPin} tone="bg-violet-500" />
+        <CountCard label="Sales Dispatch Queue" value={data.counts?.salesOrders ?? "-"} description="Orders ready for warehouse action" href="/wms/sales-dispatch" icon={FiTruck} tone="bg-amber-500" />
+      </div>
+
+      {/* Graph section */}
+      <section className="grid gap-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7 xl:grid-cols-[1.6fr_1fr]">
+        <div>
+          <div className="mb-4 flex items-center gap-3">
+            <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-50 text-cyan-700">
+              <FiTrendingUp size={20} />
+            </span>
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Overview</p>
+              <h2 className="text-2xl font-bold text-slate-900">Master Data Counts</h2>
+            </div>
+          </div>
+          <div className="h-72 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                <defs>
+                  <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#06b6d4" stopOpacity={1} />
+                    <stop offset="100%" stopColor="#0891b2" stopOpacity={0.7} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
+                <XAxis dataKey="name" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis stroke="#64748b" fontSize={12} allowDecimals={false} tickLine={false} axisLine={false} />
+                <Tooltip
+                  cursor={{ fill: "#f1f5f9" }}
+                  contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 13 }}
+                />
+                <Bar dataKey="count" fill="url(#barFill)" radius={[8, 8, 0, 0]} barSize={48} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center border-t border-slate-100 pt-6 xl:border-l xl:border-t-0 xl:pl-6 xl:pt-0">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-700">Distribution</p>
+          <h3 className="mt-1 text-lg font-bold text-slate-900">Share by Category</h3>
+          <div className="h-56 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  dataKey="count"
+                  nameKey="name"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={4}
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={entry.name} fill={COLORS[index % COLORS.length]} stroke="none" />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e2e8f0", fontSize: 13 }} />
+                <Legend verticalAlign="bottom" height={30} iconType="circle" wrapperStyle={{ fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 className="text-lg font-bold">What is ready now</h2>
+        <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+          <li>• One encrypted ERPNext connection, shared safely with Distributor.</li>
+          <li>• Read/write ERPNext Purchase Orders — create, save as draft, or submit.</li>
+          <li>• GRN screen that submits ERPNext's Purchase Receipt doctype and updates real stock.</li>
+          <li>• Master Carton UOM + conversion factor + barcode, stored on ERPNext's own Item doctype.</li>
+          <li>• Scan-to-resolve on the GRN screen: a carton barcode auto-adds the right quantity to the right line.</li>
+          <li>• No local stock balance, warehouse, or purchase-order copies created.</li>
+        </ul>
+      </section>
+    </> : null}
   </div>;
 }

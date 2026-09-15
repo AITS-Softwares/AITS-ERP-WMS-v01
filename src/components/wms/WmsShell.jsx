@@ -61,8 +61,8 @@ export default function WmsShell({ children }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <header className="border-b border-slate-800 bg-slate-950 px-4 py-4 text-white md:px-7">
+    <div className="min-h-screen bg-slate-100 text-slate-900 md:h-screen md:overflow-hidden">
+      <header className="z-30 border-b border-slate-800 bg-slate-950 px-4 py-4 text-white md:px-7">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
           <Link href="/wms" className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-400 font-black text-slate-950">W</span>
@@ -80,8 +80,8 @@ export default function WmsShell({ children }) {
         </div>
       ) : null}
 
-      <div className="mx-auto flex max-w-[1600px]">
-        <aside className="hidden min-h-[calc(100vh-73px)] w-64 shrink-0 border-r border-slate-200 bg-white p-3 md:block">
+      <div className="mx-auto flex max-w-[1600px] md:h-[calc(100vh-73px)]">
+        <aside className="hidden h-full w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-3 md:block">
           <p className="px-3 pb-2 pt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Warehouse</p>
           <nav className="space-y-1">
             {navigation.map(({ href, label, icon: Icon }) => {
@@ -90,7 +90,7 @@ export default function WmsShell({ children }) {
             })}
           </nav>
         </aside>
-        <main className="min-w-0 flex-1 p-4 pb-24 md:p-7">{children}</main>
+        <main className="min-w-0 flex-1 p-4 pb-24 md:h-full md:overflow-y-auto md:p-7">{children}</main>
       </div>
 
       <nav className="sticky bottom-0 z-20 flex overflow-x-auto border-t border-slate-200 bg-white shadow-[0_-4px_12px_rgba(15,23,42,0.06)] md:hidden">
