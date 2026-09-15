@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import {
-  FiArrowRight,
   FiBriefcase,
   FiChevronRight,
   FiEye,
@@ -12,7 +11,6 @@ import {
   FiLoader,
   FiLock,
   FiMail,
-  FiSmartphone,
   FiUser,
 } from "react-icons/fi";
 import { toast, ToastContainer } from "react-toastify";
@@ -84,9 +82,9 @@ export default function LoginPage() {
 
       <ToastContainer position="top-center" theme="light" />
 
-      <div className="z-10 w-full max-w-6xl px-6 py-8">
-        <div className="mb-6 flex flex-col items-center sm:mb-8">
-          <div className="relative mb-4 flex h-28 w-28 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-xl transition-all duration-300 hover:scale-105 sm:h-32 sm:w-32 md:h-36 md:w-36 lg:h-40 lg:w-40">
+      <div className="z-10 w-full max-w-md px-5 py-8 sm:px-6">
+        <div className="mb-7 flex flex-col items-center text-center">
+          <div className="relative mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-white/30 transition-all duration-300 hover:scale-105 sm:h-28 sm:w-28">
             {!imageLoaded && !logoError && (
               <div className="absolute inset-0 z-10 flex items-center justify-center bg-white">
                 <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#105B92] border-t-transparent"></div>
@@ -110,15 +108,12 @@ export default function LoginPage() {
             )}
           </div>
 
-          {logoError && (
-            <div className="mt-2 text-center">
-              <span className="text-xs text-blue-100">Logo not loaded, using text version</span>
-            </div>
-          )}
+          <p className="inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-blue-100">AITSERP Workspace</p>
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-white">Welcome back</h1>
+          <p className="mt-2 text-sm text-blue-100">Sign in to access your warehouse workspace.</p>
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_360px]">
-          <div className="overflow-hidden rounded-2xl border border-white/20 bg-white/95 shadow-2xl backdrop-blur-sm">
+        <div className="overflow-hidden rounded-3xl border border-white/30 bg-white/95 shadow-2xl backdrop-blur-sm">
             <div className="flex gap-1 bg-gray-100/50 p-1">
               {[
                 { id: "Company", icon: <FiBriefcase size={14} /> },
@@ -144,7 +139,8 @@ export default function LoginPage() {
               ))}
             </div>
 
-            <div className="p-6">
+            <div className="p-6 sm:p-7">
+              <div className="mb-6"><h2 className="text-xl font-bold text-slate-900">Sign in</h2><p className="mt-1 text-sm text-slate-500">Use your registered account details.</p></div>
               <form onSubmit={submit} className="space-y-5">
                 <div>
                   <label className="mb-1 block text-xs font-medium text-gray-600">Email Address</label>
@@ -219,45 +215,10 @@ export default function LoginPage() {
                 <span className="text-gray-400">Servers Online</span>
               </div>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/20 bg-white/15 p-6 text-white shadow-2xl backdrop-blur-sm">
-            <div className="flex h-full flex-col justify-between gap-6">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-blue-100">
-                  <FiSmartphone size={14} />
-                  Distributor App
-                </div>
-                <h2 className="mt-4 text-2xl font-semibold">Dedicated distributor login</h2>
-                <p className="mt-3 text-sm leading-6 text-blue-100">
-                  Keep distributors on their own OTP-first journey with separate screens for product ordering, stock requests, invoice tracking, dispatch, and complaints.
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                <div className="rounded-2xl border border-white/10 bg-white/10 p-4">
-                  <p className="text-sm font-semibold">Separate from admin and customer flows</p>
-                  <p className="mt-1 text-xs text-blue-100">
-                    This block is only a clean entry point. Login fields stay on the dedicated distributor page you approved.
-                  </p>
-                </div>
-
-                <Link
-                  href="/distributor/signin"
-                  className="inline-flex w-full items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-[#105B92] transition hover:bg-blue-50"
-                >
-                  <span>Go to distributor login</span>
-                  <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#105B92] text-white">
-                    <FiArrowRight size={16} />
-                  </span>
-                </Link>
-              </div>
-            </div>
-          </div>
         </div>
 
         <p className="mt-6 text-center text-[10px] uppercase tracking-wider text-blue-100">
-          Secure access only • Authorized users and mapped distributors
+          Secure access only • Authorized users
         </p>
       </div>
 
