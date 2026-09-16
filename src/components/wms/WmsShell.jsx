@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiArrowLeft, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiMapPin, FiShoppingCart, FiTag } from "react-icons/fi";
+import { FiArrowLeft, FiBarChart2, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiLogOut, FiMapPin, FiShoppingCart, FiTag, FiTruck } from "react-icons/fi";
 
 // Ordered by how often a warehouse operator uses each screen.
 const navigation = [
@@ -13,6 +13,8 @@ const navigation = [
   { href: "/wms/items", label: "Items", shortLabel: "Items", icon: FiBox },
   { href: "/wms/warehouses", label: "Warehouses", shortLabel: "Warehouses", icon: FiMapPin },
   { href: "/wms/carton-setup", label: "Carton Setup", shortLabel: "Cartons", icon: FiTag },
+  { href: "/wms/sales-dispatch", label: "Sales Dispatch", shortLabel: "Dispatch", icon: FiTruck },
+  { href: "/wms/reports", label: "Reports", shortLabel: "Reports", icon: FiBarChart2 },
   { href: "/wms/uoms", label: "Units of Measure", shortLabel: "UOM", icon: FiDatabase },
   { href: "/wms/setup", label: "ERPNext Connection", shortLabel: "Connection", icon: FiLink },
 ];
@@ -53,16 +55,21 @@ export default function WmsShell({ children }) {
 
   const backHref = parentHref(pathname);
   const backLabel = navigation.find((item) => item.href === backHref)?.label || "Back";
+  const logout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    router.replace("/signin");
+  };
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <header className="border-b border-slate-800 bg-slate-950 px-4 py-4 text-white md:px-7">
+    <div className="min-h-screen bg-slate-100 text-slate-900 md:h-screen md:overflow-hidden">
+      <header className="z-30 border-b border-slate-800 bg-slate-950 px-4 py-4 text-white md:px-7">
         <div className="mx-auto flex max-w-[1600px] items-center justify-between gap-4">
           <Link href="/wms" className="flex items-center gap-3">
             <span className="grid h-10 w-10 place-items-center rounded-xl bg-cyan-400 font-black text-slate-950">W</span>
             <span><span className="block text-base font-bold tracking-wide">AITSERP WMS</span><span className="block text-xs text-slate-400">ERPNext-connected warehouse operations</span></span>
           </Link>
-          <div className="hidden text-right text-sm md:block"><p className="font-semibold">{user.name || user.email}</p><p className="text-xs text-slate-400">Warehouse workspace</p></div>
+          <div className="flex items-center gap-3"><div className="hidden text-right text-sm md:block"><p className="font-semibold">{user.name || user.email}</p><p className="text-xs text-slate-400">Warehouse workspace</p></div><button type="button" onClick={logout} className="inline-flex items-center gap-2 rounded-xl border border-white/20 px-3 py-2 text-sm font-semibold text-white transition hover:bg-white/10"><FiLogOut size={16} /><span className="hidden sm:inline">Logout</span></button></div>
         </div>
       </header>
 
@@ -74,8 +81,8 @@ export default function WmsShell({ children }) {
         </div>
       ) : null}
 
-      <div className="mx-auto flex max-w-[1600px]">
-        <aside className="hidden min-h-[calc(100vh-73px)] w-64 shrink-0 border-r border-slate-200 bg-white p-3 md:block">
+      <div className="mx-auto flex max-w-[1600px] md:h-[calc(100vh-73px)]">
+        <aside className="hidden h-full w-64 shrink-0 overflow-y-auto border-r border-slate-200 bg-white p-3 md:block">
           <p className="px-3 pb-2 pt-3 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Warehouse</p>
           <nav className="space-y-1">
             {navigation.map(({ href, label, icon: Icon }) => {
@@ -84,7 +91,7 @@ export default function WmsShell({ children }) {
             })}
           </nav>
         </aside>
-        <main className="min-w-0 flex-1 p-4 pb-24 md:p-7">{children}</main>
+        <main className="min-w-0 flex-1 p-4 pb-24 md:h-full md:overflow-y-auto md:p-7">{children}</main>
       </div>
 
       <nav className="sticky bottom-0 z-20 flex overflow-x-auto border-t border-slate-200 bg-white shadow-[0_-4px_12px_rgba(15,23,42,0.06)] md:hidden">

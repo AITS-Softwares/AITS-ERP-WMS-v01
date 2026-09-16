@@ -5,9 +5,12 @@ import { erpnextRequestWithConfig } from "@/services/integrations/erpnext/erpnex
 const RESOURCE_DEFINITIONS = {
   items: {
     doctype: "Item",
-    fields: ["name", "item_code", "item_name", "item_group", "stock_uom", "disabled", "is_stock_item", "has_batch_no", "has_serial_no", "modified"],
+    fields: ["name", "item_code", "item_name", "item_group", "custom_item_type", "stock_uom", "disabled", "is_stock_item", "has_batch_no", "has_serial_no", "modified"],
     orderBy: "modified desc",
-    filters: [["Item", "disabled", "=", 0]],
+    filters: [
+      ["Item", "disabled", "=", 0],
+      ["Item", "custom_item_type", "=", "Finished Goods"],
+    ],
     searchFields: ["item_code", "item_name"],
   },
   warehouses: {
@@ -29,6 +32,19 @@ const RESOURCE_DEFINITIONS = {
     orderBy: "modified desc",
     filters: [["Purchase Order", "docstatus", "!=", 2]],
     searchFields: ["name", "supplier", "supplier_name"],
+  },
+  "sales-orders": {
+    doctype: "Sales Order",
+    fields: ["name", "customer", "customer_name", "transaction_date", "delivery_date", "set_warehouse", "status", "docstatus", "grand_total", "currency", "per_delivered", "modified"],
+    orderBy: "modified desc",
+    // A Sales Dispatch starts from a Sales Order that still needs warehouse
+    // action. Keep cancelled orders out and apply the requested ERPNext
+    // statuses on the server, rather than exposing a UI filter.
+    filters: [
+      ["Sales Order", "docstatus", "!=", 2],
+      ["Sales Order", "status", "in", ["Draft", "On Hold", "To Deliver", "To Deliver and Bill"]],
+    ],
+    searchFields: ["name", "customer", "customer_name"],
   },
   suppliers: {
     doctype: "Supplier",
@@ -117,12 +133,31 @@ export async function getWmsMasterRecords(companyId, resource, options = {}) {
   return { resource, doctype: definition.doctype, records, page, pageSize, hasMore: records.length === pageSize, connectionLabel: connection.label };
 }
 
+async function getWmsMasterRecordCount(companyId, resource) {
+  let page = 1;
+  let total = 0;
+  // ERPNext returns a maximum of 100 records per request. Count every page
+  // so dashboard totals are live rather than fixed to the first page.
+  while (page <= 500) {
+    const result = await getWmsMasterRecords(companyId, resource, { page, pageSize: 100 });
+    total += result.records.length;
+    if (!result.hasMore || !result.records.length) break;
+    page += 1;
+  }
+  return total;
+}
+
 export async function getWmsDashboardData(companyId) {
-  const [items, warehouses, purchaseOrders] = await Promise.all([
+  const [items, warehouses, purchaseOrders, salesOrders, itemCount, warehouseCount, purchaseOrderCount, salesOrderCount] = await Promise.all([
     getWmsMasterRecords(companyId, "items", { pageSize: 5 }),
     getWmsMasterRecords(companyId, "warehouses", { pageSize: 5 }),
     getWmsMasterRecords(companyId, "purchase-orders", { pageSize: 5 }),
+    getWmsMasterRecords(companyId, "sales-orders", { pageSize: 5 }),
+    getWmsMasterRecordCount(companyId, "items"),
+    getWmsMasterRecordCount(companyId, "warehouses"),
+    getWmsMasterRecordCount(companyId, "purchase-orders"),
+    getWmsMasterRecordCount(companyId, "sales-orders"),
   ]);
-  return { items, warehouses, purchaseOrders };
+  return { items, warehouses, purchaseOrders, salesOrders, counts: { items: itemCount, warehouses: warehouseCount, purchaseOrders: purchaseOrderCount, salesOrders: salesOrderCount } };
 }
 
