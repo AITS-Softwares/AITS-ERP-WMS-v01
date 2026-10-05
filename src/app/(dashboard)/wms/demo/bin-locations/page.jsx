@@ -36,11 +36,20 @@ export default function BinLocations() {
     if (response.ok) { setForm((current) => ({ ...current, binNumber: "", capacity: "" })); load(); }
   };
   const createLabel = async (bin, autoPrint = false) => {
+    const labelWindow = window.open("about:blank", "_blank");
+    if (labelWindow) labelWindow.opener = null;
+    try {
     const response = await fetch("/api/wms/demo/bin-labels", { method: "POST", headers: headers(), body: JSON.stringify({ binLocationId: bin._id }) });
     const payload = await response.json();
-    if (!response.ok) { setMessage(payload.message || "Unable to generate barcode."); return; }
+    if (!response.ok) throw new Error(payload.message || "Unable to generate barcode.");
     const suffix = autoPrint ? "?autoprint=1" : "";
-    window.open(`/wms/locations/bin-labels/${payload.data._id}${suffix}`, "_blank", "noopener,noreferrer");
+    const url = `/wms/locations/bin-labels/${payload.data._id}${suffix}`;
+    if (labelWindow && !labelWindow.closed) labelWindow.location.replace(url);
+    else window.location.assign(url);
+    } catch (error) {
+      if (labelWindow && !labelWindow.closed) labelWindow.close();
+      setMessage(error.message || "Unable to generate barcode.");
+    }
   };
 
   return <div className="space-y-6">

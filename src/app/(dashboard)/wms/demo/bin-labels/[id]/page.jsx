@@ -10,7 +10,7 @@ export default function BinBarcodeLabel() {
   const { id } = useParams();
   const searchParams = useSearchParams();
   const [label, setLabel] = useState(null), [error, setError] = useState("");
-  useEffect(() => { fetch("/api/wms/demo/barcodes", { headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` } }).then((response) => response.json()).then((payload) => { const found = (payload.data || []).find((row) => row._id === id); if (!found) throw new Error("Barcode label not found."); setLabel(found); }).catch((loadError) => setError(loadError.message)); }, [id]);
+  useEffect(() => { fetch("/api/wms/demo/barcodes", { headers: { Authorization: `Bearer ${localStorage.getItem("token") || ""}` } }).then(async (response) => { const payload = await response.json(); if (!response.ok) throw new Error(payload.message || "Unable to load barcode label."); return payload; }).then((payload) => { const found = (payload.data || []).find((row) => row._id === id); if (!found) throw new Error("Barcode label not found."); setLabel(found); }).catch((loadError) => setError(loadError.message)); }, [id]);
   useEffect(() => { if (label && searchParams.get("autoprint") === "1") window.setTimeout(() => window.print(), 300); }, [label, searchParams]);
   if (error) return <p className="rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p>;
   if (!label) return <p className="p-6 text-sm text-slate-500">Loading barcode label...</p>;
