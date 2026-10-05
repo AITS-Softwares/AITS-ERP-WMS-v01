@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { FiBox, FiTruck, FiMapPin, FiRefreshCw, FiTrendingUp } from "react-icons/fi";
+import { FiBox, FiTruck, FiMapPin, FiRefreshCw, FiTrendingUp, FiUserPlus } from "react-icons/fi";
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid,
   PieChart, Pie, Cell, Legend,
@@ -72,7 +72,8 @@ export default function WmsHomePage() {
         <div className="mt-6 flex flex-wrap gap-3">
           <Link href="/wms/sales-dispatch" className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-300">Open Sales Dispatch</Link>
           <Link href="/wms/grn/new" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Record a GRN</Link>
-          <Link href="/wms/carton-setup" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Item &amp; Carton Setup</Link>
+          <Link href="/wms/carton-setup" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Item &amp; Carton Creation</Link>
+          <Link href="/admin/users" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"><FiUserPlus /> Create User</Link>
           <button type="button" onClick={loadDashboard} disabled={refreshing} className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"><FiRefreshCw className={refreshing ? "animate-spin" : ""} /> Refresh</button>
         </div>
       </div>

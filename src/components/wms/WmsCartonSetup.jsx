@@ -156,7 +156,7 @@ export default function WmsCartonSetup() {
         <div className="absolute bottom-0 left-1/4 h-32 w-32 rounded-full bg-violet-500/20 blur-3xl" />
         <div className="relative">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Phase 3 · Barcode &amp; Master Carton</p>
-          <h1 className="mt-2 text-3xl font-bold">Item &amp; Carton Setup</h1>
+          <h1 className="mt-2 text-3xl font-bold">Item &amp; Carton Creation</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Shows Item UOMs and conversion factors from ERPNext. Select a UOM to generate and display its own barcode.</p>
         </div>
       </section>

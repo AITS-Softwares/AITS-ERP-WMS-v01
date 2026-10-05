@@ -7,7 +7,7 @@ import { FiDatabase, FiHash } from "react-icons/fi";
 
 function StatCard({ label, value, icon: Icon, tone }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-900/[0.03]">
       <div className={`absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-10 blur-2xl ${tone}`} />
       <div className="relative flex items-center justify-between">
         <div>
@@ -96,15 +96,15 @@ export default function WmsMasterTable({ title = "", description = "", resource,
       <StatCard label={`Total ${title || "Records"}`} value={totalCount ?? "-"} icon={FiHash} tone="bg-cyan-500" />
     </div>
 
-    <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-slate-100 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm shadow-slate-900/[0.03]">
+      <div className="flex flex-col gap-3 border-b border-slate-100 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
         <input
           value={search}
           onChange={(event) => { setSearch(event.target.value); setPage(1); }}
           placeholder={`Search ${(title || "records").toLowerCase()}`}
-          className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 sm:max-w-sm"
+          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm shadow-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100 sm:max-w-sm"
         />
-        <button onClick={load} className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">
+        <button onClick={load} className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-cyan-200 hover:bg-cyan-50">
           Refresh
         </button>
       </div>
@@ -125,7 +125,7 @@ export default function WmsMasterTable({ title = "", description = "", resource,
       {!error && !loading ? <>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-100">
-            <thead className="bg-slate-50">
+            <thead className="bg-slate-50/80">
               <tr>
                 {columns.map((column) => (
                   <th key={column.label} className="px-4 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-slate-500">
@@ -139,7 +139,7 @@ export default function WmsMasterTable({ title = "", description = "", resource,
                 <tr
                   key={record.name}
                   onClick={rowHref ? () => router.push(rowHref(record)) : undefined}
-                  className={`transition hover:bg-slate-50 ${rowHref ? "cursor-pointer" : ""}`}
+                  className={`transition hover:bg-cyan-50/40 ${rowHref ? "cursor-pointer" : ""}`}
                 >
                   {columns.map((column) => (
                     <td key={column.label} className="whitespace-nowrap px-4 py-3.5 text-sm text-slate-700">
@@ -152,7 +152,7 @@ export default function WmsMasterTable({ title = "", description = "", resource,
           </table>
         </div>
         {!records.length ? <div className="p-10 text-center text-sm text-slate-500">No records found.</div> : null}
-        <div className="flex items-center justify-between border-t border-slate-100 p-4 text-sm">
+        <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50/50 p-4 text-sm">
           <span className="text-slate-500">Page {page}</span>
           <div className="flex gap-2">
             <button disabled={page === 1} onClick={() => setPage((value) => value - 1)} className="rounded-lg border border-slate-300 px-3 py-1.5 transition hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-transparent">

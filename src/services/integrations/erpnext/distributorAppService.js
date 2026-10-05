@@ -1,4 +1,3 @@
-import { buildDistributorLocalExtensions } from "@/services/distributor/buildDistributorLocalExtensions";
 import { buildERPNextConfig, resolveERPNextConnection } from "@/services/integrations/erpnext/connectionService";
 import { resolveERPNextDistributorContext as resolveERPNextDistributorIdentityContext } from "@/services/integrations/erpnext/distributorIdentityService";
 import { ERPNextError, erpnextRequestWithConfig } from "@/services/integrations/erpnext/erpnextClient";
@@ -369,7 +368,14 @@ export async function resolveERPNextTransactionPricing(config, company, customer
 }
 
 export async function buildDistributorConnectedAppData(session, { baseData } = {}) {
-  const localData = baseData || await buildDistributorLocalExtensions(session);
+  const localData = baseData || {
+    workflowHistoryMap: {},
+    profile: {},
+    savedAddresses: [],
+    notifications: [],
+    offers: [],
+    invoices: [],
+  };
   const { workflowHistoryMap = {}, ...localDataForClient } = localData;
   const liveContext = await resolveERPNextDistributorContext(session);
 

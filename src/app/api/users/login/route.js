@@ -74,7 +74,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import CompanyUser from '@/models/CompanyUser';
-import Employee from '@/models/hr/Employee';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import {jwtDecode} from 'jwt-decode';
@@ -96,8 +95,7 @@ export async function POST(req) {
     await dbConnect();
 
     // 🔐 Find user
-    const user = await CompanyUser.findOne({ email })
-      .populate("employeeId");
+    const user = await CompanyUser.findOne({ email });
     if (!user) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
@@ -120,7 +118,7 @@ export async function POST(req) {
         roles: Array.isArray(user.roles) ? user.roles : [],
         modules,
         type: 'user',
-        employeeId: user.employeeId?._id,
+        employeeId: user.employeeId || null,
       },
       SECRET,
       { expiresIn: '1d' }

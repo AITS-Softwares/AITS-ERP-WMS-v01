@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db.js";
 import Customer from "@/models/CustomerModel";
 import CompanyUser from "@/models/CompanyUser";
-import SlaPolicy from "@/models/helpdesk/SlaPolicy";
 import AccountHead from "@/models/accounts/AccountHead";
 
 import { getTokenFromHeader, verifyJWT } from "@/lib/auth";

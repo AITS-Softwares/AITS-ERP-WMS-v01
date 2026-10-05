@@ -1,5 +1,6 @@
 import { resolveWmsErpnextContext } from "@/services/integrations/erpnext/wms/masterDataService";
 import { getERPNextDoc, insertAndSubmitERPNextDoc, submitERPNextDoc } from "@/services/integrations/erpnext/wms/wmsDocumentHelpers";
+import { getBinAvailableQty } from "@/services/integrations/erpnext/wms/binLocationService";
 
 function badRequest(message) { const error = new Error(message); error.status = 400; return error; }
 function text(value) { return String(value ?? "").trim(); }
@@ -36,8 +37,9 @@ export async function createSalesStockOut(companyId, input = {}) {
   if (Number(salesOrder.docstatus) !== 1) throw badRequest("Submit the Sales Order in ERPNext before creating a Stock Out delivery.");
   if (["Completed", "Closed", "Cancelled"].includes(text(salesOrder.status))) throw badRequest(`Sales Order ${salesOrder.name} is ${salesOrder.status} and cannot be dispatched.`);
 
+  const { config } = await resolveWmsErpnextContext(companyId);
   const sourceLines = new Map((salesOrder.items || []).map((row) => [row.name, row]));
-  const items = (Array.isArray(input.lines) ? input.lines : []).map((line) => {
+  const items = await Promise.all((Array.isArray(input.lines) ? input.lines : []).map(async (line) => {
     const source = sourceLines.get(text(line.salesOrderItem));
     if (!source) return null;
     const qty = number(line.qty);
@@ -45,11 +47,14 @@ export async function createSalesStockOut(companyId, input = {}) {
     const remainingQty = Math.max(0, number(source.qty) - number(source.delivered_qty));
     if (qty > remainingQty) throw badRequest(`${source.item_code} can dispatch only ${remainingQty} more ${source.uom || source.stock_uom || "units"}.`);
     const warehouse = text(line.warehouse) || text(source.warehouse) || text(salesOrder.set_warehouse);
-    if (!warehouse) throw badRequest(`A source warehouse is required for ${source.item_code}.`);
+    if (!warehouse) throw badRequest(`Select a source bin for ${source.item_code}.`);
+    const stockQty = qty * (number(source.conversion_factor, 1) || 1);
+    const available = await getBinAvailableQty(config, warehouse, source.item_code);
+    if (stockQty > available.actualQty) throw badRequest(`${source.item_code} has only ${available.actualQty} available in ${warehouse}.`);
     return { item_code: source.item_code, item_name: source.item_name, qty, uom: source.uom || source.stock_uom, stock_uom: source.stock_uom || source.uom, conversion_factor: number(source.conversion_factor, 1) || 1, rate: number(source.rate), warehouse, sales_order: salesOrder.name, against_sales_order: salesOrder.name, so_detail: source.name };
-  }).filter(Boolean);
-  if (!items.length) throw badRequest("Select at least one item and enter a Stock Out quantity.");
+  }));
+  const validItems = items.filter(Boolean);
+  if (!validItems.length) throw badRequest("Select at least one item and enter a Stock Out quantity.");
 
-  const { config } = await resolveWmsErpnextContext(companyId);
-  return insertAndSubmitERPNextDoc(config, "Delivery Note", { doctype: "Delivery Note", customer: salesOrder.customer, company: salesOrder.company, posting_date: today(), set_warehouse: text(salesOrder.set_warehouse) || undefined, items });
+  return insertAndSubmitERPNextDoc(config, "Delivery Note", { doctype: "Delivery Note", customer: salesOrder.customer, company: salesOrder.company, posting_date: today(), set_warehouse: text(salesOrder.set_warehouse) || undefined, items: validItems });
 }

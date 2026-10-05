@@ -192,6 +192,8 @@ export default function App(){
   const[packets,setPackets]=useState(8842);
   const[welcomeMsg,setWelcomeMsg]=useState("");
   const[form,setForm]=useState({companyName:"",contactName:"",email:"",phone:"",businessType:"",industry:"",gstNumber:"",country:"",address:"",pinCode:"",password:"",confirmPwd:"",agreeToTerms:false,upi:"",cardNumber:"",cardName:"",cardExpiry:"",cardCvv:""});
+  // Company onboarding is not available in the WMS workspace. User accounts are created by an admin.
+  useEffect(()=>{router.replace("/admin/users");},[router]);
   useEffect(()=>{const iv=setInterval(()=>setPackets(v=>v+Math.floor(Math.random()*40-10)),1100);return()=>clearInterval(iv);},[]);
   const price=useMemo(()=>BUNDLES.find(b=>b.id===activeBundle),[activeBundle]);
   const handleChange=(e)=>{const n=e.target.name,v=e.target.type==="checkbox"?e.target.checked:e.target.value;setForm(p=>({...p,[n]:v}));if(errors[n])setErrors(p=>({...p,[n]:null}));};

@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import axios from "axios";
-import EmployeeSearchSelect from "@/components/hr/EmployeeSearchSelect";
 import {
   FiPlus, FiTrash2, FiEdit2, FiSearch, FiShield,
   FiUser, FiMail, FiLock, FiX, FiCheck, FiChevronDown,
@@ -440,9 +439,6 @@ export default function UsersPage() {
 
                 {activeTab === "info" && (
                   <div className="space-y-4">
-                    <EmployeeSearchSelect token={token} onSelect={(emp) =>
-                      setForm(prev => ({ ...prev, employeeId: emp._id, name: prev.name || emp.fullName, email: prev.email || emp.email }))
-                    } />
                     <div>
                       <label className="block text-[10.5px] font-bold uppercase tracking-wider text-gray-500 mb-1.5">Full Name *</label>
                       <div className="relative">
