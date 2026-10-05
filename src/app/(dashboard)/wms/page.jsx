@@ -8,6 +8,8 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 
+import { wmsPresentationData } from "@/lib/wmsPresentationData";
+
 const COLORS = ["#06b6d4", "#8b5cf6", "#f59e0b"];
 
 function CountCard({ label, value, description, href, icon: Icon, tone }) {
@@ -32,7 +34,9 @@ function CountCard({ label, value, description, href, icon: Icon, tone }) {
 }
 
 export default function WmsHomePage() {
-  const [data, setData] = useState(null);
+  const [liveData, setData] = useState(null);
+  const [presentation, setPresentation] = useState(true);
+  const data = presentation ? wmsPresentationData : liveData;
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
@@ -48,10 +52,11 @@ export default function WmsHomePage() {
   }, []);
 
   useEffect(() => {
+    if (presentation) return;
     loadDashboard();
     const refreshTimer = setInterval(loadDashboard, 60000);
     return () => clearInterval(refreshTimer);
-  }, [loadDashboard]);
+  }, [loadDashboard, presentation]);
 
   const notConfigured = error.includes("not configured");
 
@@ -74,14 +79,16 @@ export default function WmsHomePage() {
           <Link href="/wms/grn/new" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Record a GRN</Link>
           <Link href="/wms/carton-setup" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Item &amp; Carton Creation</Link>
           <Link href="/admin/users" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"><FiUserPlus /> Create User</Link>
-          <button type="button" onClick={loadDashboard} disabled={refreshing} className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"><FiRefreshCw className={refreshing ? "animate-spin" : ""} /> Refresh</button>
+          <button type="button" onClick={loadDashboard} disabled={presentation || refreshing} className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"><FiRefreshCw className={refreshing ? "animate-spin" : ""} /> Refresh</button>
         </div>
       </div>
     </section>
 
-    {error ? (
+    <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm"><p>{presentation ? "Presentation mode: sample figures for the demo. Cards and graphs show static data." : "Live mode: figures from ERPNext."}</p><button type="button" onClick={() => setPresentation((value) => !value)} className="rounded-xl bg-slate-950 px-4 py-2 font-bold text-white">{presentation ? "Show live data" : "Show presentation data"}</button></section>
+
+    {!presentation && error ? (
       <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
-        <p className="font-bold">WMS is not connected yet</p>
+        <p className="font-bold">Live data could not be loaded</p>
         <p className="mt-1">{error}</p>
         {notConfigured ? <Link href="/wms/setup" className="mt-3 inline-block font-bold underline">Open ERPNext connection setup</Link> : null}
       </section>
@@ -96,8 +103,8 @@ export default function WmsHomePage() {
     {data ? <>
       {/* Stat cards */}
       <div className="grid gap-4 md:grid-cols-3">
-        <CountCard label="Finished Goods Items" value={data.counts?.items ?? "-"} description="Live ERPNext Finished Goods total" href="/wms/items" icon={FiBox} tone="bg-cyan-500" />
-        <CountCard label="Warehouses" value={data.counts?.warehouses ?? "-"} description="Live active ERPNext warehouses" href="/wms/warehouses" icon={FiMapPin} tone="bg-violet-500" />
+        <CountCard label="Finished Goods Items" value={data.counts?.items ?? "-"} description={presentation ? "Sample Finished Goods total" : "Live ERPNext Finished Goods total"} href="/wms/items" icon={FiBox} tone="bg-cyan-500" />
+        <CountCard label="Warehouses" value={data.counts?.warehouses ?? "-"} description={presentation ? "Sample active warehouses" : "Live active ERPNext warehouses"} href="/wms/warehouses" icon={FiMapPin} tone="bg-violet-500" />
         <CountCard label="Sales Dispatch Queue" value={data.counts?.salesOrders ?? "-"} description="Orders ready for warehouse action" href="/wms/sales-dispatch" icon={FiTruck} tone="bg-amber-500" />
       </div>
 

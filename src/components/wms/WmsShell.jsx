@@ -3,11 +3,19 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { FiArrowLeft, FiBarChart2, FiBox, FiClipboard, FiDatabase, FiGrid, FiLink, FiLogOut, FiMapPin, FiShoppingCart, FiTag, FiTruck } from "react-icons/fi";
+import { FiArrowLeft, FiBarChart2, FiBox, FiChevronDown, FiClipboard, FiDatabase, FiGrid, FiLink, FiLogOut, FiMapPin, FiShoppingCart, FiTag, FiTruck } from "react-icons/fi";
 
 // Ordered by how often a warehouse operator uses each screen.
 const navigation = [
   { href: "/wms", label: "Control Center", shortLabel: "Home", icon: FiGrid },
+  { href: "/wms/locations", label: "Warehouse Location Management", shortLabel: "Locations", icon: FiMapPin, children: [
+    { href: "/wms/locations/analytics", label: "Dashboard" },
+    { href: "/wms/locations/racks", label: "Rack Master" },
+    { href: "/wms/locations/shelves", label: "Shelf Master" },
+    { href: "/wms/locations/bin-locations", label: "Bin Location Master" },
+    { href: "/wms/locations/reports", label: "Location Reports" },
+    { href: "/wms/locations/import", label: "Bulk Data Import" },
+  ] },
   { href: "/wms/purchase-orders", label: "Purchase Orders", shortLabel: "Orders", icon: FiShoppingCart },
   { href: "/wms/grn", label: "GRN", shortLabel: "GRN", icon: FiClipboard },
   { href: "/wms/items", label: "Items", shortLabel: "Items", icon: FiBox },
@@ -34,6 +42,7 @@ export default function WmsShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
+  const [locationMenuOpen, setLocationMenuOpen] = useState(pathname.startsWith("/wms/locations"));
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -87,8 +96,9 @@ export default function WmsShell({ children }) {
           <div className="mb-4 rounded-2xl border border-cyan-100 bg-gradient-to-br from-cyan-50 to-white px-3 py-3"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-700">Workspace</p><p className="mt-1 text-sm font-bold text-slate-800">Warehouse operations</p></div>
           <p className="px-3 pb-2 text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Navigation</p>
           <nav className="space-y-1">
-            {navigation.map(({ href, label, icon: Icon }) => {
+            {navigation.map(({ href, label, icon: Icon, children: submenu }) => {
               const active = href === "/wms" ? pathname === href : pathname.startsWith(href);
+              if (submenu) return <div key={href}><button type="button" onClick={() => setLocationMenuOpen((open) => !open)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${active ? "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-900 shadow-sm ring-1 ring-cyan-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><Icon size={17} /><span className="flex-1">{label}</span><FiChevronDown size={16} className={`transition-transform ${locationMenuOpen ? "rotate-180" : ""}`} /></button>{locationMenuOpen ? <div className="mt-1 space-y-1 border-l border-cyan-100 py-1 pl-4">{submenu.map((item) => <Link key={item.href} href={item.href} className={`block rounded-lg px-3 py-2 text-xs font-semibold transition ${pathname === item.href ? "bg-cyan-50 text-cyan-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}>{item.label}</Link>)}</div> : null}</div>;
               return <Link key={href} href={href} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${active ? "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-900 shadow-sm ring-1 ring-cyan-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><Icon size={17} />{label}</Link>;
             })}
           </nav>

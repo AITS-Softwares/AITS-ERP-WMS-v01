@@ -2,6 +2,9 @@
 const nextConfig = {
   compress: true,
   images: { unoptimized: true },
+  async rewrites() {
+    return [{ source: "/wms/locations/:path*", destination: "/wms/demo/:path*" }];
+  },
 };
 
 export default nextConfig;
