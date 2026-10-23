@@ -3,15 +3,12 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import WmsSelect from "@/components/wms/WmsSelect";
+import WmsGrnLocationFields from "@/components/wms/WmsGrnLocationFields";
 import WmsBarcodeScanner from "@/components/wms/WmsBarcodeScanner";
 import { isWmsBarcodeUiEnabled } from "@/components/wms/wmsBarcodePreference";
 
 function authHeaders() {
   return { Authorization: `Bearer ${localStorage.getItem("token") || ""}` };
-}
-
-function asOptions(records, valueKey, labelKey) {
-  return records.map((record) => ({ value: record[valueKey], label: record[labelKey] || record[valueKey] }));
 }
 
 export default function WmsGrnForm() {
@@ -20,7 +17,7 @@ export default function WmsGrnForm() {
   const [poName, setPoName] = useState("");
   const [po, setPo] = useState(null);
   const [warehouses, setWarehouses] = useState([]);
-  const [bins, setBins] = useState([]);
+  const [locations, setLocations] = useState([]);
   const [warehouse, setWarehouse] = useState("");
   const [lines, setLines] = useState([]);
   const [loadingPo, setLoadingPo] = useState(false);
@@ -39,7 +36,7 @@ export default function WmsGrnForm() {
   }, []);
 
   useEffect(() => {
-    if (!poName) { setPo(null); setLines([]); setWarehouses([]); setBins([]); return; }
+    if (!poName) { setPo(null); setLines([]); setWarehouses([]); setLocations([]); return; }
     setLoadingPo(true); setNotice(null);
     fetch(`/api/wms/purchase-orders/${encodeURIComponent(poName)}`, { headers: authHeaders() })
       .then((r) => r.json().then((payload) => ({ ok: r.ok, payload })))
@@ -47,21 +44,18 @@ export default function WmsGrnForm() {
         if (!ok) throw new Error(payload.message || "Unable to load this Purchase Order.");
         const doc = payload.data;
         setPo(doc);
-        setWarehouse(doc.set_warehouse || "");
+        setWarehouse("");
         setLines((doc.items || []).map((row) => {
           const pending = Math.max(0, Number(row.qty || 0) - Number(row.received_qty || 0));
-          return { poItemName: row.name, itemCode: row.item_code, itemName: row.item_name, uom: row.uom, ordered: row.qty, received: row.received_qty || 0, pending, receivedQty: pending, rejectedQty: 0, batchNo: "", warehouse: "" };
+          return { poItemName: row.name, itemCode: row.item_code, itemName: row.item_name, uom: row.uom, ordered: row.qty, received: row.received_qty || 0, pending, receivedQty: pending, rejectedQty: 0, batchNo: "", physicalLocation: "" };
         }));
         // Warehouses belong to one ERPNext Company — scope the list to the PO's Company.
         const query = new URLSearchParams({ pageSize: "100", company: doc.company || "" });
-        return Promise.all([
-          fetch(`/api/wms/warehouses?${query}`, { headers: authHeaders() }).then((r) => r.json()),
-          fetch(`/api/wms/bin-locations?company=${encodeURIComponent(doc.company || "")}`, { headers: authHeaders() }).then((r) => r.json()),
-        ]).then(([warehousePayload, binPayload]) => { setWarehouses(warehousePayload.data?.records || []); setBins(binPayload.data || []); });
+        return Promise.all([fetch(`/api/wms/warehouses?${query}`, { headers: authHeaders() }).then((r) => r.json()), fetch(`/api/wms/physical-locations?company=${encodeURIComponent(doc.company || "")}`, { headers: authHeaders() }).then((r) => r.json())]).then(([warehousePayload, locationPayload]) => { setWarehouses(warehousePayload.data?.records || []); setLocations(locationPayload.data || []); });
       })
       .catch((error) => {
         setNotice({ tone: "error", message: error.message || "Unable to load this Purchase Order." });
-        setPo(null); setLines([]); setWarehouses([]); setBins([]);
+        setPo(null); setLines([]); setWarehouses([]);
       })
       .finally(() => setLoadingPo(false));
   }, [poName]);
@@ -82,7 +76,8 @@ export default function WmsGrnForm() {
     setNotice({ tone: "success", message: `+${increment} ${resolved.stockUom} for ${resolved.itemName} (scanned ${resolved.uom}).` });
   }
 
-  const canSave = Boolean(poName) && Boolean(warehouse) && lines.some((line) => Number(line.receivedQty) > 0);
+  const activeLines = lines.filter((line) => Number(line.receivedQty) > 0);
+  const canSave = Boolean(poName) && activeLines.length > 0 && activeLines.every((line) => !line.locationPending && Boolean(line.physicalLocation || warehouse));
 
   async function confirmGrn() {
     try {
@@ -92,8 +87,8 @@ export default function WmsGrnForm() {
         headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({
           purchaseOrder: poName,
-          warehouse,
-          lines: lines.filter((line) => Number(line.receivedQty) > 0).map((line) => ({ poItemName: line.poItemName, receivedQty: line.receivedQty, rejectedQty: line.rejectedQty, batchNo: line.batchNo, warehouse: line.warehouse })),
+          physicalLocation: warehouse,
+          lines: lines.filter((line) => Number(line.receivedQty) > 0).map((line) => ({ poItemName: line.poItemName, receivedQty: line.receivedQty, rejectedQty: line.rejectedQty, batchNo: line.batchNo, physicalLocation: line.physicalLocation })),
         }),
       });
       const payload = await response.json().catch(() => ({}));
@@ -108,8 +103,7 @@ export default function WmsGrnForm() {
 
   const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
   const openOrderOptions = openOrders.map((order) => ({ value: order.name, label: `${order.name} · ${order.supplier_name || order.supplier}` }));
-  const warehouseOptions = asOptions(warehouses, "name", "warehouse_name");
-  const binOptions = bins.map((bin) => ({ value: bin.name, label: `${bin.warehouse_name || bin.name} · Available ${bin.actualQty}` }));
+  const locationOptions = locations.map((location) => ({ value: location.name, label: `${location.warehouseName} · ${location.label}` }));
 
   return (
     <div className="space-y-6">
@@ -126,8 +120,8 @@ export default function WmsGrnForm() {
           <label className="grid gap-2 text-sm font-semibold text-slate-700">Open Purchase Order
             <WmsSelect value={poName} onChange={setPoName} options={openOrderOptions} placeholder="Search open Purchase Orders..." />
           </label>
-          <label className="grid gap-2 text-sm font-semibold text-slate-700">Receiving bin location
-            <WmsSelect value={warehouse} onChange={setWarehouse} options={binOptions.length ? binOptions : warehouseOptions} placeholder={po ? "Select a physical bin..." : "Select a Purchase Order first"} disabled={!po} />
+          <label className="grid gap-2 text-sm font-semibold text-slate-700">Receiving location
+            <WmsSelect value={warehouse} onChange={setWarehouse} options={locationOptions} placeholder={po ? "Select rack / shelf / bin..." : "Select a Purchase Order first"} disabled={!po} />
           </label>
         </div>
         {po ? <p className="mt-4 text-sm text-slate-500">Supplier: <strong className="text-slate-800">{po.supplier_name || po.supplier}</strong> · Status: <strong className="text-slate-800">{po.status}</strong></p> : null}
@@ -150,9 +144,7 @@ export default function WmsGrnForm() {
                 <label className="grid gap-1 text-xs font-semibold text-slate-500">Received qty<input type="number" min="0" step="0.0001" className={inputClass} value={line.receivedQty} onChange={(event) => updateLine(line.poItemName, { receivedQty: event.target.value })} /></label>
                 <label className="grid gap-1 text-xs font-semibold text-slate-500">Rejected qty<input type="number" min="0" step="0.0001" className={inputClass} value={line.rejectedQty} onChange={(event) => updateLine(line.poItemName, { rejectedQty: event.target.value })} /></label>
                 <label className="grid gap-1 text-xs font-semibold text-slate-500">Batch No. (if tracked)<input className={inputClass} value={line.batchNo} onChange={(event) => updateLine(line.poItemName, { batchNo: event.target.value })} /></label>
-                <label className="grid gap-1 text-xs font-semibold text-slate-500">Bin override
-                  <WmsSelect value={line.warehouse} onChange={(value) => updateLine(line.poItemName, { warehouse: value })} options={binOptions.length ? binOptions : warehouseOptions} placeholder="Use receiving bin" />
-                </label>
+                <WmsGrnLocationFields locations={locations} defaultLocation={warehouse} onChange={(patch) => updateLine(line.poItemName, patch)} />
                 <p className="self-center text-xs text-slate-400">{line.uom}</p>
               </div>
             ))}
