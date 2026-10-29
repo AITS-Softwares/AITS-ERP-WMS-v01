@@ -22,6 +22,7 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
   const [status, setStatus] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
   const [cameraSupported, setCameraSupported] = useState(false);
+  const [scannedLocation, setScannedLocation] = useState(null);
 
   useEffect(() => {
     setCameraSupported(typeof window !== "undefined" && "BarcodeDetector" in window);
@@ -35,7 +36,15 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
     const term = String(value || "").trim();
     if (!term) return;
     try {
+      setScannedLocation(null);
       setStatus({ tone: "pending", message: "Looking up barcode..." });
+      const locationResponse = await fetch(`/api/wms/physical-locations/lookup?code=${encodeURIComponent(term)}`, { headers: authHeaders() });
+      if (locationResponse.ok) {
+        const locationPayload = await locationResponse.json();
+        setScannedLocation(locationPayload.data);
+        setStatus({ tone: "success", message: "Warehouse location found." });
+        return;
+      }
       const response = await fetch(`/api/wms/barcode-lookup?code=${encodeURIComponent(term)}`, { headers: authHeaders() });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || "Barcode was not recognized.");
@@ -64,7 +73,10 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play();
       }
-      const detector = new window.BarcodeDetector({ formats: ["code_128"] });
+      const supportedFormats = await window.BarcodeDetector.getSupportedFormats();
+      const formats = supportedFormats.filter((format) => ["code_128", "qr_code", "ean_13", "ean_8", "upc_a", "upc_e", "code_39", "code_93", "codabar", "itf"].includes(format));
+      if (!formats.length) throw new Error("This browser cannot scan supported barcode formats with its camera.");
+      const detector = new window.BarcodeDetector({ formats });
       const poll = async () => {
         if (!streamRef.current || !videoRef.current) return;
         try {
@@ -98,7 +110,7 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
           value={code}
           onChange={(event) => setCode(event.target.value)}
           onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); lookup(code); } }}
-          placeholder="Scan or type a carton barcode, then Enter"
+          placeholder="Scan a location or carton barcode, then Enter"
           className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
         />
         <button type="button" onClick={() => lookup(code)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700">Lookup</button>
@@ -108,6 +120,9 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
       </div>
       {cameraOpen ? <video ref={videoRef} muted playsInline className="mt-3 aspect-video w-full max-w-sm rounded-xl bg-black" /> : null}
       {status ? <p className={`mt-2 text-xs font-medium ${toneClass}`}>{status.message}</p> : null}
+      {scannedLocation ? <dl className="mt-3 grid grid-cols-2 gap-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-sm sm:grid-cols-4">
+        {[["Warehouse", scannedLocation.warehouseName || scannedLocation.warehouse], ["Rack", scannedLocation.rack], ["Shelf", scannedLocation.shelf], ["Bin", scannedLocation.bin]].map(([label, value]) => <div key={label}><dt className="text-xs text-slate-500">{label}</dt><dd className="font-semibold text-slate-900">{value || "Not assigned"}</dd></div>)}
+      </dl> : null}
     </div>
   );
 }

@@ -20,7 +20,10 @@ const navigation = [
   ] },
   { href: "/wms/carton-setup", label: "Carton Creation", shortLabel: "Cartons", icon: FiTag },
   { href: "/wms/sales-dispatch", label: "Sales Dispatch", shortLabel: "Dispatch", icon: FiTruck },
-  { href: "/wms/reports", label: "Reports", shortLabel: "Reports", icon: FiBarChart2 },
+  { href: "/wms/reports", label: "Reports", shortLabel: "Reports", icon: FiBarChart2, children: [
+    { href: "/wms/reports/custom", label: "Custom Reports" },
+    { href: "/wms/reports/standard", label: "ERP Standard Reports" },
+  ] },
   { href: "/wms/uoms", label: "Units of Measure", shortLabel: "UOM", icon: FiDatabase },
   { href: "/wms/setup", label: "ERPNext Connection", shortLabel: "Connection", icon: FiLink },
 ];
@@ -39,7 +42,7 @@ export default function WmsShell({ children }) {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [locationMenuOpen, setLocationMenuOpen] = useState(["/wms/racks", "/wms/shelves", "/wms/bins", "/wms/bin-locations"].includes(pathname));
+  const [openMenus, setOpenMenus] = useState(() => Object.fromEntries(navigation.filter((item) => item.children).map((item) => [item.href, item.children.some((child) => pathname === child.href) || pathname === item.href])));
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -95,7 +98,7 @@ export default function WmsShell({ children }) {
           <nav className="space-y-1">
             {navigation.map(({ href, label, icon: Icon, children: submenu }) => {
               const active = href === "/wms" ? pathname === href : (pathname.startsWith(href) || submenu?.some((item) => pathname === item.href));
-              if (submenu) return <div key={href}><button type="button" onClick={() => setLocationMenuOpen((open) => !open)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${active ? "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-900 shadow-sm ring-1 ring-cyan-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><Icon size={17} /><span className="flex-1">{label}</span><FiChevronDown size={16} className={`transition-transform ${locationMenuOpen ? "rotate-180" : ""}`} /></button>{locationMenuOpen ? <div className="mt-1 space-y-1 border-l border-cyan-100 py-1 pl-4">{submenu.map((item) => <Link key={item.href} href={item.href} className={`block rounded-lg px-3 py-2 text-xs font-semibold transition ${pathname === item.href ? "bg-cyan-50 text-cyan-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}>{item.label}</Link>)}</div> : null}</div>;
+              if (submenu) return <div key={href}><button type="button" aria-expanded={Boolean(openMenus[href])} onClick={() => setOpenMenus((menus) => ({ ...menus, [href]: !menus[href] }))} className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition ${active ? "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-900 shadow-sm ring-1 ring-cyan-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><Icon size={17} /><span className="flex-1">{label}</span><FiChevronDown size={16} className={`transition-transform ${openMenus[href] ? "rotate-180" : ""}`} /></button>{openMenus[href] ? <div className="mt-1 space-y-1 border-l border-cyan-100 py-1 pl-4">{submenu.map((item) => <Link key={item.href} href={item.href} className={`block rounded-lg px-3 py-2 text-xs font-semibold transition ${pathname === item.href ? "bg-cyan-50 text-cyan-800" : "text-slate-500 hover:bg-slate-50 hover:text-slate-800"}`}>{item.label}</Link>)}</div> : null}</div>;
               return <Link key={href} href={href} className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${active ? "bg-gradient-to-r from-cyan-50 to-blue-50 text-cyan-900 shadow-sm ring-1 ring-cyan-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-950"}`}><Icon size={17} />{label}</Link>;
             })}
           </nav>
