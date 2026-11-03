@@ -10,7 +10,7 @@ import WmsItemBinAssignment from "@/models/WmsItemBinAssignment";
 import WmsBarcodeLabel from "@/models/WmsBarcodeLabel";
 
 const models = { racks: WmsRack, shelves: WmsShelf, "bin-locations": WmsBinLocation, assignments: WmsItemBinAssignment, barcodes: WmsBarcodeLabel };
-const populate = { shelves: "rackId", "bin-locations": "rackId shelfId", assignments: "binLocationId", barcodes: "binLocationId" };
+const populate = { shelves: "rackId", "bin-locations": "rackId shelfId", assignments: "binLocationId", barcodes: { path: "binLocationId", populate: [{ path: "rackId" }, { path: "shelfId" }] } };
 const clean = (value) => String(value ?? "").trim();
 const response = (data, summary = {}, message = "") => NextResponse.json({ success: true, data, summary, message });
 

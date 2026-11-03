@@ -168,17 +168,6 @@ export default function WmsHomePage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-bold">What is ready now</h2>
-        <ul className="mt-3 space-y-2 text-sm leading-6 text-slate-600">
-          <li>• One encrypted ERPNext connection, shared safely with Distributor.</li>
-          <li>• Read/write ERPNext Purchase Orders — create, save as draft, or submit.</li>
-          <li>• GRN screen that submits ERPNext's Purchase Receipt doctype and updates real stock.</li>
-          <li>• Master Carton UOM + conversion factor + barcode, stored on ERPNext's own Item doctype.</li>
-          <li>• Scan-to-resolve on the GRN screen: a carton barcode auto-adds the right quantity to the right line.</li>
-          <li>• No local stock balance, warehouse, or purchase-order copies created.</li>
-        </ul>
-      </section>
     </> : null}
   </div>;
 }

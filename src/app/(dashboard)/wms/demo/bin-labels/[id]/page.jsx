@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { FiPrinter } from "react-icons/fi";
-import WmsBarcode from "@/components/wms/WmsBarcode";
+import WmsLocationQr from "@/components/wms/WmsLocationQr";
 
 export default function BinBarcodeLabel() {
   const { id } = useParams();
@@ -15,5 +15,11 @@ export default function BinBarcodeLabel() {
   if (error) return <p className="rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p>;
   if (!label) return <p className="p-6 text-sm text-slate-500">Loading barcode label...</p>;
   const bin = label.binLocationId;
-  return <div className="mx-auto max-w-2xl space-y-6"><div className="flex items-center justify-between print:hidden"><Link href="/wms/locations/bin-locations" className="text-sm font-bold text-cyan-700">← Back to Bin Locations</Link><button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white"><FiPrinter /> Print Label</button></div><section className="rounded-2xl border-2 border-slate-900 bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-700">Warehouse bin location</p><h1 className="mt-2 text-3xl font-black text-slate-950">{bin?.binCode || label.warehouseId}</h1><p className="mt-2 text-sm text-slate-600">{label.warehouseId} · Rack {bin?.rackId?.rackCode || "-"} · Shelf {bin?.shelfId?.shelfCode || "-"}</p><div className="mt-7 flex justify-center"><WmsBarcode value={label.barcodeValue} height={88} /></div><p className="mt-4 font-mono text-sm text-slate-700">{label.barcodeValue}</p><p className="mt-5 text-xs text-slate-500">Scan this label to identify the physical warehouse bin.</p></section></div>;
+  const locationDetails = [
+    `Warehouse: ${label.warehouseId || "-"}`,
+    `Rack: ${bin?.rackId?.rackCode || "-"}`,
+    `Shelf: ${bin?.shelfId?.shelfCode || "-"}`,
+    `Bin: ${bin?.binCode || "-"}`,
+  ].join("\n");
+  return <div className="mx-auto max-w-2xl space-y-6"><div className="flex items-center justify-between print:hidden"><Link href="/wms/locations/bin-locations" className="text-sm font-bold text-cyan-700">← Back to Bin Locations</Link><button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-bold text-white"><FiPrinter /> Print Label</button></div><section className="rounded-2xl border-2 border-slate-900 bg-white p-8 text-center shadow-sm"><p className="text-xs font-bold uppercase tracking-[.2em] text-cyan-700">Warehouse bin location</p><h1 className="mt-2 text-3xl font-black text-slate-950">{bin?.binCode || label.warehouseId}</h1><p className="mt-2 text-sm text-slate-600">{label.warehouseId} · Rack {bin?.rackId?.rackCode || "-"} · Shelf {bin?.shelfId?.shelfCode || "-"}</p><div className="mt-5 flex justify-center"><WmsLocationQr value={locationDetails} /></div><pre className="mt-3 whitespace-pre-wrap font-mono text-sm text-slate-700">{locationDetails}</pre><p className="mt-5 text-xs text-slate-500">Scan with a phone camera or QR app to read the warehouse, rack, shelf, and bin.</p></section></div>;
 }

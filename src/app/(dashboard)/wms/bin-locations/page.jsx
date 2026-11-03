@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import WmsLocationMasters from "@/components/wms/WmsLocationMasters";
 import WmsBarcode from "@/components/wms/WmsBarcode";
-import { findScannedLocation } from "@/lib/wmsLocationQr";
+import { findScannedLocation, locationBarcodeText } from "@/lib/wmsLocationQr";
 
 export default function PhysicalLocationsPage() {
   return <div className="space-y-6"><WmsLocationMasters /><PhysicalLocationRegister /></div>;
@@ -31,12 +31,12 @@ function PhysicalLocationRegister() {
   }
   const visible = rows.filter((row) => [row.warehouseName, row.location, row.rack, row.shelf, row.bin, row.barcode].join(" ").toLowerCase().includes(search.toLowerCase()));
   return <div className="space-y-6">
-    <section className="rounded-3xl bg-slate-950 p-7 text-white"><h1 className="text-3xl font-bold">Bin, Rack &amp; Shelf Locations</h1><p className="mt-3 text-slate-300">Scan a location barcode in Sales Dispatch to stock out one unit of your selected item.</p></section>
+    <section className="rounded-3xl bg-slate-950 p-7 text-white"><h1 className="text-3xl font-bold">Bin, Rack &amp; Shelf Locations</h1><p className="mt-3 text-slate-300">Scan the Code 128 location barcode to read the warehouse, location, rack, shelf, bin, and capacity.</p></section>
     {error ? <p role="alert" className="rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p> : null}
     <section className="space-y-4 rounded-xl border bg-white p-5">
       <form onSubmit={lookup} className="space-y-2">
         <label htmlFor="location-barcode" className="block font-semibold">Scan location barcode</label>
-        <p id="scan-help" className="text-sm text-slate-500">Scan here to view warehouse, rack, shelf and bin details. Use the scan field in Sales Dispatch to stock out.</p>
+        <p id="scan-help" className="text-sm text-slate-500">Scan a location barcode here to find its details. Barcode data order: warehouse, location, rack, shelf, bin, capacity.</p>
         <div className="flex flex-wrap gap-3"><input id="location-barcode" aria-describedby="scan-help" autoComplete="off" value={scan} onChange={(event) => setScan(event.target.value)} placeholder="Scan barcode here" className="min-w-0 flex-1 rounded-xl border p-3" /><button disabled={loading || !!error || !scan.trim()} className="rounded-xl bg-cyan-600 px-5 py-3 font-semibold text-white disabled:opacity-50">Find location</button></div>
       </form>
       <div aria-live="polite">
@@ -45,6 +45,17 @@ function PhysicalLocationRegister() {
       </div>
     </section>
     <input aria-label="Search locations" placeholder="Search warehouse, location, rack, shelf, bin or barcode" value={search} onChange={(event) => setSearch(event.target.value)} className="w-full rounded-xl border p-3" />
-    <div className="overflow-x-auto rounded-xl border bg-white"><table className="min-w-full text-sm"><thead className="bg-slate-50"><tr>{["Warehouse", "Location", "Rack", "Shelf", "Bin", "Capacity", "Barcode"].map((label) => <th key={label} className="p-3 text-left">{label}</th>)}</tr></thead><tbody>{visible.map((row) => <tr key={row.name} className="border-t">{[row.warehouseName, row.location, row.rack, row.shelf, row.bin, row.capacity].map((value, index) => <td key={index} className="p-3">{value === "" || value == null ? "—" : value}</td>)}<td className="p-3"><div className="inline-flex rounded-lg border border-slate-200 bg-white px-2 py-1.5 shadow-sm"><WmsBarcode value={row.barcode || row.name} height={90} displayValue={false} className="block h-auto w-[280px]" /></div></td></tr>)}{!visible.length ? <tr><td colSpan={7} className="p-8 text-center">{loading ? "Loading locations..." : "No configured locations found."}</td></tr> : null}</tbody></table></div>
+    <div className="overflow-x-auto rounded-xl border bg-white">
+      <table className="min-w-full text-sm">
+        <thead className="bg-slate-50"><tr>{["Warehouse", "Location", "Rack", "Shelf", "Bin", "Capacity", "Location Barcode"].map((label) => <th key={label} className="p-3 text-left">{label}</th>)}</tr></thead>
+        <tbody>
+          {visible.map((row) => <tr key={row.name} className="border-t">
+            {[row.warehouseName, row.location, row.rack, row.shelf, row.bin, row.capacity].map((value, index) => <td key={index} className="p-3">{value === "" || value == null ? "—" : value}</td>)}
+            <td className="p-3"><div className="w-fit rounded-lg border border-slate-200 bg-white p-2"><WmsBarcode value={locationBarcodeText(row)} height={56} width={1} displayValue={false} /></div></td>
+          </tr>)}
+          {!visible.length ? <tr><td colSpan={7} className="p-8 text-center">{loading ? "Loading locations..." : "No configured locations found."}</td></tr> : null}
+        </tbody>
+      </table>
+    </div>
   </div>;
 }
