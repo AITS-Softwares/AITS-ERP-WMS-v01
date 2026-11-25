@@ -14,7 +14,7 @@ function authHeaders() {
  * BarcodeDetector API (Chrome/Edge on Android today; not Safari/iOS), and
  * simply feeds the same resolver.
  */
-export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
+export default function WmsBarcodeScanner({ onResolve, autoFocus = false, disabled = false }) {
   const inputRef = useRef(null);
   const videoRef = useRef(null);
   const streamRef = useRef(null);
@@ -34,7 +34,7 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
 
   async function lookup(value) {
     const term = String(value || "").trim();
-    if (!term) return;
+    if (!term || disabled) return;
     try {
       setScannedLocation(null);
       setStatus({ tone: "pending", message: "Looking up barcode..." });
@@ -49,7 +49,7 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.message || "Barcode was not recognized.");
       setStatus({ tone: "success", message: `${payload.data.itemName} · ${payload.data.uom}` });
-      onResolve?.(payload.data);
+      await onResolve?.(payload.data);
     } catch (error) {
       setStatus({ tone: "error", message: error.message || "Barcode was not recognized." });
     } finally {
@@ -108,12 +108,13 @@ export default function WmsBarcodeScanner({ onResolve, autoFocus = false }) {
         <input
           ref={inputRef}
           value={code}
+          disabled={disabled}
           onChange={(event) => setCode(event.target.value)}
           onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); lookup(code); } }}
           placeholder="Scan a location or carton barcode, then Enter"
           className="min-w-0 flex-1 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
         />
-        <button type="button" onClick={() => lookup(code)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700">Lookup</button>
+        <button type="button" disabled={disabled} onClick={() => lookup(code)} className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 disabled:opacity-50">Lookup</button>
         {cameraSupported ? (
           <button type="button" onClick={cameraOpen ? stopCamera : startCamera} className="rounded-xl bg-cyan-500 px-3 py-2.5 text-sm font-semibold text-slate-950">{cameraOpen ? "Stop camera" : "Scan with camera"}</button>
         ) : null}

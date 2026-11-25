@@ -67,16 +67,15 @@ export default function WmsHomePage() {
   ] : [];
 
   return <div className="space-y-6">
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-7 text-white shadow-xl md:p-10">
+    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-6 py-3 text-white shadow-xl md:px-8 md:py-4">
       <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
       <div className="absolute bottom-0 left-1/3 h-40 w-40 rounded-full bg-violet-500/20 blur-3xl" />
       <div className="relative">
-        <p className="text-xs font-bold uppercase tracking-[0.22em] text-cyan-300">Phase 3 · Barcode &amp; Master Carton</p>
-        <h1 className="mt-3 max-w-3xl text-3xl font-bold leading-tight md:text-4xl">Warehouse operations, connected directly to ERPNext.</h1>
-        <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300">This workspace is the new warehouse front end. ERPNext stays the only source of truth for stock, warehouses, purchase orders, UOMs, and barcode records.</p>
-        <div className="mt-6 flex flex-wrap gap-3">
+        <h1 className="max-w-3xl text-3xl font-bold leading-tight md:text-4xl">Warehouse Operations</h1>
+        <div className="mt-3 flex flex-wrap gap-3">
           <Link href="/wms/sales-dispatch" className="rounded-xl bg-cyan-400 px-4 py-2.5 text-sm font-bold text-slate-950 shadow-lg shadow-cyan-950/30 transition hover:bg-cyan-300">Open Sales Dispatch</Link>
           <Link href="/wms/grn/new" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Record a GRN</Link>
+          <Link href="/wms/stock-in" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Stock In by Barcode</Link>
           <Link href="/wms/carton-setup" className="rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10">Item &amp; Carton Creation</Link>
           <Link href="/admin/users" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"><FiUserPlus /> Create User</Link>
           <button type="button" onClick={loadDashboard} disabled={presentation || refreshing} className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-4 py-2.5 text-sm font-bold text-white transition hover:bg-white/10 disabled:opacity-50"><FiRefreshCw className={refreshing ? "animate-spin" : ""} /> Refresh</button>

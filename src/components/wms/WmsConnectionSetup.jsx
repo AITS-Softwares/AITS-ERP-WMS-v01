@@ -66,10 +66,9 @@ export default function WmsConnectionSetup() {
   const inputClass = "w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100";
   return (
     <div className="mx-auto max-w-4xl space-y-6">
-      <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-lg md:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">WMS foundation</p>
-        <h1 className="mt-2 text-3xl font-bold">ERPNext connection</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">This is a WMS-specific screen, but it securely uses the same ERPNext connection saved for this company. Distributor and WMS therefore always read from the same ERPNext site.</p>
+      <section className="flex min-h-[72px] items-center rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-6 py-3 text-white shadow-lg md:min-h-[80px] md:px-8 md:py-4">
+        <h1 className="text-3xl font-bold">ERPNext connection</h1>
+        
       </section>
       {notice ? <div className={`rounded-2xl border px-4 py-3 text-sm ${notice.tone === "error" ? "border-rose-200 bg-rose-50 text-rose-700" : "border-emerald-200 bg-emerald-50 text-emerald-700"}`}>{notice.message}</div> : null}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-7">

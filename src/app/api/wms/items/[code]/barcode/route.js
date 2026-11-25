@@ -11,7 +11,7 @@ export async function POST(req, { params }) {
     if (!user) return NextResponse.json({ success: false, message: "Warehouse Manager or System Manager access is required." }, { status: 401 });
     const { code } = await params;
     const body = await req.json().catch(() => ({}));
-    const data = await generateItemBarcode(user.companyId, decodeURIComponent(code), body.uom);
+    const data = await generateItemBarcode(user.companyId, decodeURIComponent(code), body.uom, { regenerate: body.regenerate === true });
     return NextResponse.json({ success: true, message: data.created ? `Barcode registered for ${data.itemCode} (${data.uom}).` : `Existing barcode reused for ${data.itemCode} (${data.uom}).`, data });
   } catch (error) {
     return wmsErrorResponse(error);

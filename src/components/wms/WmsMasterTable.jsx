@@ -22,7 +22,7 @@ function StatCard({ label, value, icon: Icon, tone }) {
   );
 }
 
-export default function WmsMasterTable({ title = "", description = "", resource, columns = [], action, rowHref }) {
+export default function WmsMasterTable({ title = "", description = "", resource, columns = [], action, rowHref, compactHeader = false }) {
   const router = useRouter();
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +75,7 @@ export default function WmsMasterTable({ title = "", description = "", resource,
   const retry = () => { setSearch(""); setPage(1); load(); };
 
   return <div className="space-y-6">
-    <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-xl md:p-8">
+    <section className={`relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 ${compactHeader ? "px-6 py-3 md:px-8 md:py-4" : "p-6 md:p-8"} text-white shadow-xl`}>
       <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-cyan-400/20 blur-3xl" />
       <div className="absolute bottom-0 left-1/4 h-32 w-32 rounded-full bg-violet-500/20 blur-3xl" />
       <div className="relative flex flex-col justify-between gap-5 md:flex-row md:items-end">

@@ -2,6 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes wms-truck-curve {
+  0%, 16.7% { transform: translate3d(0, 0, 0); }
+  40% { transform: translate3d(180%, -10%, 0); }
+  60% { transform: translate3d(430%, -18%, 0); }
+  80% { transform: translate3d(680%, -10%, 0); }
+  100% { transform: translate3d(960%, 0, 0); }
+}
+
+.wms-truck-curve {
+  animation: wms-truck-curve 12s linear infinite;
+  transform-origin: 50% 70%;
+  will-change: transform;
+}
+
+@keyframes wms-wheel-spin {
+  0%, 16.7% { transform: rotate(0); }
+  100% { transform: rotate(1440deg); }
+}
+
+.wms-wheel-spin {
+  animation: wms-wheel-spin 12s linear infinite;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+@keyframes barcode-scanner-pass {
+  from { left: 0; transform: translateX(0); }
+  to { left: 100%; transform: translateX(0); }
+}
+
+.barcode-scanner-moving {
+  animation: barcode-scanner-pass 14s linear infinite;
+  will-change: left, transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wms-truck-curve,
+  .wms-wheel-spin,
+  .barcode-scanner-moving { animation: none; }
+}
 
 * {
   font-family: 'Times New Roman', Times, serif !important;

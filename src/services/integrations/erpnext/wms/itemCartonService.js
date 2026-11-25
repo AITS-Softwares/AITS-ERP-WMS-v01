@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { resolveWmsErpnextContext } from "@/services/integrations/erpnext/wms/masterDataService";
 import { erpnextRequestWithConfig } from "@/services/integrations/erpnext/erpnextClient";
 import { getERPNextDoc, insertERPNextDoc } from "@/services/integrations/erpnext/wms/wmsDocumentHelpers";
@@ -39,7 +40,7 @@ export async function getItemCartonSetup(companyId, itemCode) {
   const doc = await getERPNextDoc(config, "Item", code);
   if (!doc) throw badRequest("Item was not found in ERPNext");
 
-  const cartonRow = (doc.uoms || []).find((row) => row.uom === MASTER_CARTON_UOM);
+  const cartonRow = (doc.uoms || []).find((row) => row.uom === "SOP Master Carton") || (doc.uoms || []).find((row) => row.uom === MASTER_CARTON_UOM);
   return {
     itemCode: doc.item_code,
     itemName: doc.item_name,
@@ -75,7 +76,7 @@ function buildBarcodeValue(itemCode, uom) {
   return slug.slice(0, 40);
 }
 
-export async function generateItemBarcode(companyId, itemCode, uom) {
+export async function generateItemBarcode(companyId, itemCode, uom, { regenerate = false } = {}) {
   const code = text(itemCode);
   const targetUom = text(uom) || MASTER_CARTON_UOM;
   if (!code) throw badRequest("Item code is required");
@@ -89,9 +90,11 @@ export async function generateItemBarcode(companyId, itemCode, uom) {
 
   const barcodes = [...(doc.barcodes || [])];
   const existing = barcodes.find((row) => row.uom === targetUom);
-  if (existing?.barcode) return { itemCode: doc.item_code, uom: targetUom, barcode: existing.barcode, created: false };
+  if (existing?.barcode && !regenerate) return { itemCode: doc.item_code, uom: targetUom, barcode: existing.barcode, created: false };
 
-  const barcodeValue = buildBarcodeValue(doc.item_code, targetUom);
+  const barcodeValue = regenerate
+    ? `${buildBarcodeValue(doc.item_code, targetUom).slice(0, 30)}${randomUUID().replace(/-/g, "").slice(0, 8).toUpperCase()}`
+    : buildBarcodeValue(doc.item_code, targetUom);
   barcodes.push({ barcode: barcodeValue, uom: targetUom });
   await updateERPNextDoc(config, "Item", code, { barcodes });
   return { itemCode: doc.item_code, uom: targetUom, barcode: barcodeValue, created: true };

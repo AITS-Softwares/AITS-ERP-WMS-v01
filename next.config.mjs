@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   compress: true,
+  devIndicators: false,
   images: { unoptimized: true },
   async rewrites() {
     return [{ source: "/wms/locations/:path*", destination: "/wms/demo/:path*" }];

@@ -12,13 +12,8 @@ const navigation = [
   { href: "/wms/grn", label: "GRN", shortLabel: "GRN", icon: FiClipboard },
   { href: "/wms/items", label: "Items", shortLabel: "Items", icon: FiBox },
   { href: "/wms/warehouses", label: "Warehouses", shortLabel: "Warehouses", icon: FiMapPin },
-  { href: "/wms/bin-locations", label: "Location Masters", shortLabel: "Locations", icon: FiMapPin, children: [
-    { href: "/wms/racks", label: "Rack Master" },
-    { href: "/wms/shelves", label: "Shelf Master" },
-    { href: "/wms/bins", label: "Bin Master" },
-    { href: "/wms/bin-locations", label: "Bin Master Location" },
-  ] },
   { href: "/wms/carton-setup", label: "Carton Creation", shortLabel: "Cartons", icon: FiTag },
+  { href: "/wms/barcode-master", label: "Barcode Master", shortLabel: "Barcodes", icon: FiDatabase },
   { href: "/wms/sales-dispatch", label: "Sales Dispatch", shortLabel: "Dispatch", icon: FiTruck },
   { href: "/wms/reports", label: "Reports", shortLabel: "Reports", icon: FiBarChart2, children: [
     { href: "/wms/reports/custom", label: "Custom Reports" },

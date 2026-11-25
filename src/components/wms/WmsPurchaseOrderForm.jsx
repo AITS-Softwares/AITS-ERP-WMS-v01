@@ -129,10 +129,8 @@ export default function WmsPurchaseOrderForm() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 p-6 text-white shadow-lg md:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-300">Phase 2 · Procure to receive</p>
-        <h1 className="mt-2 text-3xl font-bold">New Purchase Order</h1>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Saves and submits directly against ERPNext's Purchase Order doctype. ERPNext remains the single source of truth for status and stock.</p>
+      <section className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950 px-6 py-3 text-white shadow-lg md:px-8 md:py-4">
+        <h1 className="text-3xl font-bold">New Purchase Order</h1>
       </section>
       {notice ? <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{notice.message}</div> : null}
 

@@ -13,7 +13,7 @@ const newPoAction = <Link href="/wms/purchase-orders/new" className="rounded-xl 
 export default function WmsPurchaseOrdersPage() {
   return <WmsMasterTable
     title="Purchase Orders"
-    description="ERPNext Purchase Orders — create, submit, and receive against them here. These records are read and written directly against ERPNext."
+    compactHeader
     resource="purchase-orders"
     action={newPoAction}
     rowHref={(row) => `/wms/purchase-orders/${encodeURIComponent(row.name)}`}

@@ -3,5 +3,5 @@
 import WmsMasterTable from "@/components/wms/WmsMasterTable";
 
 export default function WmsUomsPage() {
-  return <WmsMasterTable title="Units of Measure" description="ERPNext UOM master data, including the units that will later support Master Carton conversion and carton barcodes." resource="uoms" columns={[{ label: "UOM", key: "name" }, { label: "Whole Number Only", render: (row) => row.must_be_whole_number ? "Yes" : "No" }, { label: "Last Updated", render: (row) => row.modified ? new Date(row.modified).toLocaleString() : "-" }]} />;
+  return <WmsMasterTable title="Units of Measure" compactHeader resource="uoms" columns={[{ label: "UOM", key: "name" }, { label: "Whole Number Only", render: (row) => row.must_be_whole_number ? "Yes" : "No" }, { label: "Last Updated", render: (row) => row.modified ? new Date(row.modified).toLocaleString() : "-" }]} />;
 }
